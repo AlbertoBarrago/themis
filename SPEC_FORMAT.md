@@ -244,7 +244,10 @@ The guard step fails when:
 | `2`  | The environment is broken. | The loop stops; a human must intervene. |
 
 Exit code `2` covers failures the implementation cannot fix by itself: a missing tool or
-dependency installation, failed infrastructure or migrations, a missing or corrupt lock.
+dependency installation, infrastructure that cannot start (for example the container runtime
+is not running), a missing or corrupt lock. Infrastructure definitions and migrations are
+part of the implementation: a missing or invalid definition, or a failing migration, is exit
+code `1`.
 
 ### 6.4 Failure log
 
