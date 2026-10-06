@@ -1,7 +1,26 @@
-# Themis
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
+    <img src="docs/assets/logo.svg" width="112" alt="Themis logo: a pair of scales">
+  </picture>
+</p>
 
-An open format and a reference CLI for spec-driven agentic development with a verification
-loop.
+<h1 align="center">Themis</h1>
+
+<p align="center">
+  <strong>Humans lay down the law. Agents do the work. One verifier judges.</strong><br>
+  An open format and a reference CLI for spec-driven agentic development with a verification loop.
+</p>
+
+<p align="center">
+  <a href="https://albz.it/themis/"><img alt="Website" src="https://img.shields.io/badge/website-albz.it%2Fthemis-8a5a1f"></a>
+  <a href="https://github.com/AlbertoBarrago/themis/wiki"><img alt="Wiki" src="https://img.shields.io/badge/docs-wiki-8a5a1f"></a>
+  <a href="SPEC_FORMAT.md"><img alt="Spec format v0.1" src="https://img.shields.io/badge/spec%20format-v0.1-8a5a1f"></a>
+  <img alt="Node.js 22+" src="https://img.shields.io/badge/node-%E2%89%A522-5f584e">
+  <img alt="Status: early development" src="https://img.shields.io/badge/status-early%20development-5f584e">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/AlbertoBarrago/themis?color=5f584e"></a>
+  <a href="https://github.com/AlbertoBarrago/themis/actions/workflows/pages.yml"><img alt="Site deploy" src="https://github.com/AlbertoBarrago/themis/actions/workflows/pages.yml/badge.svg"></a>
+</p>
 
 Themis is the Titaness of divine law and order: she lays down what is right, and her scales
 weigh what is done against it. In Themis, humans lay down the law: a `spec.md` with decisions
@@ -17,9 +36,8 @@ configuration over time.
 > worktrees, review and parallelism, status and retrospective). The format is at version
 > `0.1`. Not published to npm yet.
 
-Website: <https://albz.it/themis/> · Documentation:
-[the wiki](https://github.com/AlbertoBarrago/themis/wiki) · Inspired by Boris Cherny's advice
-to give Claude a way to verify its work ([why](https://github.com/AlbertoBarrago/themis/wiki/Inspiration)).
+Inspired by Boris Cherny's advice to give Claude a way to verify its work
+([why](https://github.com/AlbertoBarrago/themis/wiki/Inspiration)).
 
 ## How it works
 
