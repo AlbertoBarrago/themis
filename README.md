@@ -13,8 +13,8 @@ convergence**: an immutable contract, one verifier with semantic exit codes, gua
 shortcuts, a reviewer against scope creep, and a retrospective loop that improves the agent
 configuration over time.
 
-> Status: early development. Milestones M0 to M5 are done (format, init, plan, tests, run with
-> worktrees, review and parallelism); `status` and `retro` are next. The format is at version
+> Status: early development. Milestones M0 to M6 are done (format, init, plan, tests, run with
+> worktrees, review and parallelism, status and retrospective). The format is at version
 > `0.1`. Not published to npm yet.
 
 ## How it works
@@ -35,7 +35,9 @@ configuration over time.
                           worker edits → Themis verifies → reviewer reads the diff
                           → merge → full verification of the branch
         │
- themis retro (planned)   GATE 3: proposed improvements to the agents' instructions
+ themis retro             retro agent → changes to the agents' instructions, each
+        │                 citing the run evidence it addresses
+ themis approve retro     GATE 3: apply them
 ```
 
 Three human gates, and only three. You decide **what** (the spec) and **when it is done** (the
@@ -81,6 +83,10 @@ themis approve tests              # gate 2: the contract is locked
 git add -A && git commit -m "lock contract"
 
 themis run                        # runs the whole graph until every task is done
+themis status                     # gates, tasks, iterations, cost
+
+themis retro                      # retro agent proposes changes to the agents' instructions
+themis approve retro              # gate 3: apply them, then commit .themis/agents/
 ```
 
 A real run on a three-criterion library (the reviewer catches scope creep, two tasks run in
@@ -166,6 +172,9 @@ Depends: none
 | `themis tests [--force]` | Test-author agent, read-only tools. Themis writes the files after checking paths, coverage and forbidden markers. |
 | `themis approve tests [--force]` | Gate 2. Re-checks the files on disk, then records the digests of the tests, spec, verifier and tool configuration in `.themis/lock.json`. |
 | `themis run [task] [--executor local\|lima]` | Runs the whole graph, or one task. See below. |
+| `themis status [--json]` | Read-only report: gates (spec, plan, contract, including locked files changed since), and per task its status, iterations against the budget, cost and what went wrong. Exits `0` whenever it can report. |
+| `themis retro` | Retro agent, read-only tools. See below. |
+| `themis approve retro` | Gate 3. Applies the proposal, unless an instruction file changed since it was made. Themis does not commit the result. |
 
 Questions agents raise about the spec are either `blocking` (contradictory or unverifiable
 criteria: fix the spec) or `minor` (details a worker decides and records; later tasks receive
@@ -192,6 +201,17 @@ every step (`.themis/state.json`): interrupt with Ctrl-C and run again to resume
 tree must be clean and the locked contract committed before `run`; Themis never commits your
 changes and only ever undoes a merge it has just made.
 
+### `themis retro`
+
+Themis extracts the evidence of the run from `.themis/state.json` and the worker logs, each
+item with a stable id (`AC-2#1:review` reviewer objection at iteration 1, `AC-1#1:verify`
+verifier failure, `AC-2:failed`, `AC-1:choice-1`, ...). With no evidence it does not call the
+agent. The retro agent proposes text replacements in the planner, test-author, worker or
+reviewer instructions, each with the pattern it addresses and the evidence ids. Themis
+rejects proposals that target any other file (its own instructions included), cite unknown
+evidence, or whose text does not match exactly once. The proposal is written to
+`.themis/runs/retro.json` and printed as a diff; nothing changes until `themis approve retro`.
+
 ### Exit codes
 
 Every command, and the verifier, uses the same convention:
@@ -213,7 +233,8 @@ Every command, and the verifier, uses the same convention:
   tests.json         the acceptance-test gate
   lock.json          sha256 of every file in the contract
   state.json         run state, per task and iteration (git-ignored)
-  runs/              every agent call: result, tokens, cost (git-ignored)
+  runs/              every agent call: result, tokens, cost; retro.json, the pending
+                     retrospective proposal (git-ignored)
   worktrees/         one checkout per running task (git-ignored)
 .claude/settings.json  deny rules on the contract, for interactive sessions
 ```

@@ -15,6 +15,7 @@ import type { Spec } from "../spec/types.js";
 import { LOCK_PATH, protectedPaths, VERIFY_SCRIPT } from "../stack/node-ts/contract.js";
 import { reviewerPrompt, type SettledChoice, type TaskContext, workerPrompt } from "./prompt.js";
 import {
+  describeLast,
   emptyTaskState,
   IN_PROGRESS,
   type IterationRecord,
@@ -690,15 +691,4 @@ function failedStepOf(log: string | undefined): string | null {
 
 function costOf(usage: AgentUsage | null): number | null {
   return usage?.costUsd ?? null;
-}
-
-function describeLast(record: IterationRecord | undefined): string {
-  if (record === undefined) return "no iteration";
-  if (record.mergeReverted) return "the merged result failed the verifier";
-  if (record.mergeConflicts !== undefined)
-    return `merge conflict on ${record.mergeConflicts.join(", ")}`;
-  if (record.review?.verdict === "changes")
-    return `reviewer asked for changes: ${record.review.reasons[0] ?? ""}`;
-  if (record.verifyExit !== 0) return `verifier failed at ${record.failedStep ?? "unknown step"}`;
-  return "unknown";
 }

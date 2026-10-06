@@ -3,7 +3,9 @@ import { approveCommand } from "./commands/approve.js";
 import { check } from "./commands/check.js";
 import { initCommand } from "./commands/init.js";
 import { planCommand } from "./commands/plan.js";
+import { retroCommand } from "./commands/retro.js";
 import { runCommand } from "./commands/run.js";
+import { statusCommand } from "./commands/status.js";
 import { testsCommand } from "./commands/tests.js";
 import { type CliIo, ExitCode } from "./io.js";
 
@@ -16,7 +18,10 @@ Commands:
   approve plan   Approve the draft plan (human gate)
   tests          Ask the test author for acceptance tests (draft tests/acceptance/)
   approve tests  Approve the tests and lock the contract (human gate)
-  run [task]     Run one task until the verifier passes (--executor lima for the VM)
+  run [task]     Run the task graph, or one task (--executor lima for the VM)
+  status         Show the gates and the state of every task
+  retro          Ask the retro agent for changes to the agents' instructions
+  approve retro  Apply the proposed changes (human gate)
 
 Options:
   -h, --help     Show help
@@ -32,6 +37,8 @@ const COMMANDS: Record<string, Command> = {
   tests: (args, io) => testsCommand(args, io),
   approve: (args, io) => approveCommand(args, io),
   run: (args, io) => runCommand(args, io),
+  status: (args, io) => statusCommand(args, io),
+  retro: (args, io) => retroCommand(args, io),
 };
 
 /** Dispatches a command line (without the node and script arguments) and returns the exit code. */

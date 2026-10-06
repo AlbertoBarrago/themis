@@ -118,3 +118,15 @@ export async function writeState(root: string, state: StateFile): Promise<void> 
   await writeFile(temporary, `${JSON.stringify(state, null, 2)}\n`);
   await rename(temporary, target);
 }
+
+/** What went wrong in an iteration, for messages and reports. */
+export function describeLast(record: IterationRecord | undefined): string {
+  if (record === undefined) return "no iteration";
+  if (record.mergeReverted) return "the merged result failed the verifier";
+  if (record.mergeConflicts !== undefined)
+    return `merge conflict on ${record.mergeConflicts.join(", ")}`;
+  if (record.review?.verdict === "changes")
+    return `reviewer asked for changes: ${record.review.reasons[0] ?? ""}`;
+  if (record.verifyExit !== 0) return `verifier failed at ${record.failedStep ?? "unknown step"}`;
+  return "unknown";
+}

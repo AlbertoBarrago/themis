@@ -3,6 +3,8 @@ import { approveTests, TestsFileError } from "../../acceptance/acceptance.js";
 import { DEFAULT_AGENT, guardInstallerFor } from "../../adapters/registry.js";
 import type { Question } from "../../agents/questions.js";
 import { approvePlan, TasksFileError } from "../../plan/plan.js";
+import { approveRetro, RetroFileError } from "../../retro/retro.js";
+import { RETRO_PATH } from "../../retro/schema.js";
 import type { Executor } from "../../runtime/executor.js";
 import { LocalExecutor } from "../../runtime/local-executor.js";
 import { formatDiagnostic } from "../../spec/diagnostics.js";
@@ -14,6 +16,7 @@ export const APPROVE_HELP = `Usage: themis approve <gate> [--force]
 Human approval gates:
   plan    Approve the draft .themis/tasks.json produced by themis plan
   tests   Approve tests/acceptance/ and lock the contract (.themis/lock.json)
+  retro   Apply the changes to the agent instructions proposed by themis retro
 
 Options:
   --force           Approve despite blocking questions
@@ -39,18 +42,23 @@ export async function approveCommand(
     return ExitCode.Ok;
   }
   const [gate, ...extra] = positionals;
-  if ((gate !== "plan" && gate !== "tests") || extra.length > 0) {
+  if ((gate !== "plan" && gate !== "tests" && gate !== "retro") || extra.length > 0) {
     io.stderr(
       `themis approve: expected a gate${gate === undefined ? "" : `, got "${positionals.join(" ")}"`}\n\n${APPROVE_HELP}`,
     );
     return ExitCode.Usage;
   }
   try {
+    if (gate === "retro") return await approveRetroGate(io);
     return gate === "plan"
       ? await approvePlanGate(io, values.force)
       : await approveTestsGate(io, values.force, values.agent, executor);
   } catch (err) {
-    if (err instanceof TasksFileError || err instanceof TestsFileError) {
+    if (
+      err instanceof TasksFileError ||
+      err instanceof TestsFileError ||
+      err instanceof RetroFileError
+    ) {
       io.stderr(`themis approve ${gate}: ${err.message}\n`);
       return ExitCode.Usage;
     }
@@ -146,6 +154,40 @@ async function approveTestsGate(
           `${outcome.lock.base === null ? " (no git commit: markers are checked on every file)" : ` (base ${outcome.lock.base.slice(0, 12)})`}\n` +
           files.map((f) => `  ${f}\n`).join("") +
           "next: themis run\n",
+      );
+      return ExitCode.Ok;
+    }
+  }
+}
+
+async function approveRetroGate(io: CliIo): Promise<ExitCode> {
+  const outcome = await approveRetro(io.cwd);
+  const fail = (message: string, code: ExitCode) => {
+    io.stderr(`themis approve retro: ${message}\n`);
+    return code;
+  };
+  switch (outcome.kind) {
+    case "no-proposal":
+      return fail("no proposal to approve; run themis retro first", ExitCode.Usage);
+    case "changed":
+      return fail(
+        `changed since the proposal was made: ${outcome.files.join(", ")}; re-run themis retro`,
+        ExitCode.Invalid,
+      );
+    case "invalid-proposal":
+      return fail(
+        `${RETRO_PATH} cannot be applied:\n${outcome.errors.map((e) => `  - ${e}\n`).join("")}`.trimEnd(),
+        ExitCode.Invalid,
+      );
+    case "approved": {
+      const paths = outcome.changes.map((c) => c.path);
+      if (paths.length === 0) {
+        io.stdout("no change proposed; proposal removed\n");
+        return ExitCode.Ok;
+      }
+      io.stdout(
+        `updated:\n${paths.map((p) => `  ${p}\n`).join("")}` +
+          `commit them before the next themis run:\n  git add ${paths.join(" ")}\n  git commit -m "chore: apply themis retro"\n`,
       );
       return ExitCode.Ok;
     }

@@ -110,6 +110,30 @@ export class Git {
       .stdout;
   }
 
+  /** Unified diff between two files, repository or not (`git diff --no-index`). */
+  async diffFiles(cwd: string, a: string, b: string): Promise<string> {
+    // Explicit prefixes: user settings such as diff.mnemonicPrefix would change the headers.
+    const args = [
+      "diff",
+      "--no-index",
+      "--no-color",
+      "--no-ext-diff",
+      "--src-prefix=a/",
+      "--dst-prefix=b/",
+      "--",
+      a,
+      b,
+    ];
+    const result = await this.#run(cwd, args, true);
+    // --no-index exits 1 when the files differ.
+    if (result.exitCode !== 0 && result.exitCode !== 1) {
+      throw new GitError(
+        `git ${args.join(" ")} failed (${result.exitCode}): ${(result.stderr || result.stdout).trim()}`,
+      );
+    }
+    return result.stdout;
+  }
+
   async changedFiles(cwd: string, from: string, to = "HEAD"): Promise<string[]> {
     const out = (await this.#run(cwd, ["diff", "--name-only", `${from}..${to}`])).stdout;
     return out.split("\n").filter((l) => l !== "");
