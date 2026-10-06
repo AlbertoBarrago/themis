@@ -1,0 +1,49 @@
+name: Bug report
+description: A command crashed, gave a wrong result, or an error message was unclear.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: input
+    id: command
+    attributes:
+      label: Command
+      placeholder: "themis run --executor lima"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened, with the exit code
+      description: Exit codes are `0` ok, `1` fixable problem, `2` usage or environment.
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: The full terminal output, and `.verify.log` if the verifier was involved.
+      render: text
+
+  - type: textarea
+    id: spec
+    attributes:
+      label: Spec (or the smallest part of it that reproduces the problem)
+      render: markdown
+
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: Output of `themis --version`, OS, Node.js version, executor (local or lima).
+      placeholder: "0.0.0, macOS 15, Node 22.12, local"
+    validations:
+      required: true

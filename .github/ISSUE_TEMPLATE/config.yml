@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/AlbertoBarrago/themis/discussions
+    about: How do I write a spec for X? Should Themis do Y? Ask in Discussions.
+  - name: Getting started
+    url: https://github.com/AlbertoBarrago/themis/wiki/Getting-Started
+    about: The ten-minute walkthrough, with a ready-made spec.

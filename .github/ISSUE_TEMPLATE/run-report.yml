@@ -1,0 +1,85 @@
+name: Run report
+description: You tried Themis on something real. Tell us how it went, good or bad.
+title: "[run] "
+labels: ["run-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for trying Themis. A run report is the most useful feedback we can get:
+        it shows where the loop converges and where it does not.
+        Nothing is collected automatically; share only what you are comfortable sharing.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What did you build?
+      description: A sentence or two. Link the spec if you can share it.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: How far did you get?
+      options:
+        - Every task done
+        - Some tasks done, some failed or blocked
+        - Stopped at the plan (gate 1)
+        - Stopped at the tests (gate 2)
+        - Could not install or initialise
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stuck
+    attributes:
+      label: Where did you spend the most effort?
+      options:
+        - Writing the spec
+        - Answering the planner's questions
+        - Reviewing or editing the acceptance tests
+        - Tasks failing during themis run
+        - Setting up the environment (Node, Claude Code, Lima)
+        - Nowhere, it went smoothly
+    validations:
+      required: true
+
+  - type: textarea
+    id: status
+    attributes:
+      label: Output of `themis status --json`
+      description: Iterations, costs and failure reasons per task. Remove anything private.
+      render: json
+
+  - type: input
+    id: time
+    attributes:
+      label: Roughly how long from spec to the end of the run?
+      placeholder: "e.g. 40 minutes, of which 15 writing the spec"
+
+  - type: dropdown
+    id: again
+    attributes:
+      label: Would you use Themis again for a similar task?
+      options:
+        - "Yes"
+        - Maybe, if something changed (tell us below)
+        - "No"
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: What surprised you, what you expected to happen, what you would change.
+
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: Output of `themis --version`, OS, Node.js version, executor (local or lima).
+      placeholder: "0.0.0, macOS 15, Node 22.12, local"
+    validations:
+      required: true
