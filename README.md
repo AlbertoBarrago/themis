@@ -12,7 +12,7 @@ The point is not generating a plan. It is **guaranteeing convergence**: an immut
 contract, one verifier with semantic exit codes, guards against shortcuts, and a
 retrospective loop that improves the agent configuration over time.
 
-> Status: early development (milestone M3). The format is at version `0.1`.
+> Status: early development (milestone M4). The format is at version `0.1`.
 
 ## The format
 
@@ -47,6 +47,7 @@ themis plan [--spec <path>] [--force]   # planner agent -> draft .themis/tasks.j
 themis approve plan                     # human gate
 themis tests [--force]                  # test author -> tests/acceptance/ (draft)
 themis approve tests [--force]          # human gate: lock the contract
+themis run [task] [--executor lima]     # worker loop until the verifier passes
 ```
 
 `init` scaffolds a node-ts project if the folder has no `package.json` (an existing project is
@@ -71,7 +72,25 @@ the workers.
 `approve tests` re-checks the files on disk and records their digests, with the spec, verifier
 and tool configuration, in `.themis/lock.json`: from then on the guard rejects any change.
 
-Planned commands: `run`, `status`, `retro`.
+`run` drives one task at a time: the worker agent edits the code, then Themis runs the
+verifier itself; exit `1` feeds `.verify.log` into the next iteration, exit `2` blocks the task,
+running out of `limits.max_iterations` fails it. State is saved after every step
+(`.themis/state.json`), so a run can be interrupted and resumed.
+
+### Running agents in a VM
+
+Agents run arbitrary commands. `--executor lima` runs them, and the verifier, in a dedicated
+[Lima](https://lima-vm.io) VM that only sees `~/themis-workspaces`:
+
+```sh
+scripts/lima/create-vm.sh            # once: VM "themis" with Node 22, git, Docker, Claude Code
+limactl shell themis                 # once: run `claude` inside and log in
+mkdir -p ~/themis-workspaces/app && cd ~/themis-workspaces/app   # projects live here
+themis init --executor lima          # npm install happens in the VM (native binaries)
+themis run --executor lima
+```
+
+Planned commands: `status`, `retro`.
 
 ## Development
 

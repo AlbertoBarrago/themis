@@ -3,6 +3,7 @@ import { approveCommand } from "./commands/approve.js";
 import { check } from "./commands/check.js";
 import { initCommand } from "./commands/init.js";
 import { planCommand } from "./commands/plan.js";
+import { runCommand } from "./commands/run.js";
 import { testsCommand } from "./commands/tests.js";
 import { type CliIo, ExitCode } from "./io.js";
 
@@ -15,6 +16,7 @@ Commands:
   approve plan   Approve the draft plan (human gate)
   tests          Ask the test author for acceptance tests (draft tests/acceptance/)
   approve tests  Approve the tests and lock the contract (human gate)
+  run [task]     Run one task until the verifier passes (--executor lima for the VM)
 
 Options:
   -h, --help     Show help
@@ -29,6 +31,7 @@ const COMMANDS: Record<string, Command> = {
   plan: (args, io) => planCommand(args, io),
   tests: (args, io) => testsCommand(args, io),
   approve: (args, io) => approveCommand(args, io),
+  run: (args, io) => runCommand(args, io),
 };
 
 /** Dispatches a command line (without the node and script arguments) and returns the exit code. */

@@ -3,10 +3,11 @@ import { availableAgents, DEFAULT_AGENT, guardInstallerFor } from "../../adapter
 import { init } from "../../init/init.js";
 import type { Executor } from "../../runtime/executor.js";
 import { LocalExecutor } from "../../runtime/local-executor.js";
+import { EXECUTORS, executorFor } from "../../runtime/select.js";
 import { formatDiagnostic } from "../../spec/diagnostics.js";
 import { type CliIo, ExitCode } from "../io.js";
 
-export const INIT_HELP = `Usage: themis init [--spec <path>] [--agent <name>] [--force] [--skip-install]
+export const INIT_HELP = `Usage: themis init [--spec <path>] [--agent <name>] [--executor local|lima] [--force] [--skip-install]
 
 Prepares the current directory for Themis: scaffolds a node-ts project if there is no
 package.json, then writes .themis/ (verifier, guard, agent roles) and agent protections.
@@ -14,6 +15,8 @@ package.json, then writes .themis/ (verifier, guard, agent roles) and agent prot
 Options:
   --spec <path>     Spec file (default: spec.md)
   --agent <name>    Agent adapter (default: ${DEFAULT_AGENT})
+  --executor <name> Where npm install runs: local (default) or lima (the project must then be
+                    run with --executor lima too: native binaries differ per platform)
   --force           Overwrite generated files whose content differs
   --skip-install    Do not run npm install
   -h, --help
@@ -32,6 +35,7 @@ export async function initCommand(
       spec: { type: "string", default: "spec.md" },
       agent: { type: "string", default: DEFAULT_AGENT },
       force: { type: "boolean", default: false },
+      executor: { type: "string", default: "local" },
       "skip-install": { type: "boolean", default: false },
       help: { type: "boolean", short: "h", default: false },
     },
@@ -52,6 +56,13 @@ export async function initCommand(
     return ExitCode.Usage;
   }
 
+  const selected = executorFor(values.executor, executor);
+  if (selected === undefined) {
+    io.stderr(
+      `themis init: unknown executor "${values.executor}" (available: ${EXECUTORS.join(", ")})\n`,
+    );
+    return ExitCode.Usage;
+  }
   const specPath = values.spec.replaceAll("\\", "/").replace(/^\.\//, "");
   const outcome = await init({
     root: io.cwd,
@@ -59,7 +70,7 @@ export async function initCommand(
     force: values.force,
     install: !values["skip-install"],
     guards,
-    executor,
+    executor: selected,
   });
 
   switch (outcome.kind) {

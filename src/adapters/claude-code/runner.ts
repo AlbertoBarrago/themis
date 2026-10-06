@@ -16,6 +16,7 @@ const DEFAULT_MODELS: Record<ModelTier, string> = { strong: "opus", fast: "sonne
 const TOOLS: Record<ToolAccess, string> = {
   none: "",
   "read-only": "Read,Grep,Glob",
+  edit: "Read,Edit,Write,Bash,Grep,Glob",
 };
 
 export interface ClaudeCodeRunnerOptions {
@@ -69,12 +70,21 @@ export class ClaudeCodeRunner implements AgentRunner {
       invocation.instructions,
       "--settings",
       JSON.stringify(settings),
+      // Only project and local settings: user-level settings and the user's global CLAUDE.md
+      // (personal instructions such as "wait for confirmation") must not reach agents. ADR 0013.
+      "--setting-sources",
+      "project,local",
       "--tools",
       TOOLS[invocation.tools],
       // Nothing may block on an interactive approval in a non-interactive run.
       "--permission-prompts",
       "none",
     ];
+    if (invocation.tools === "edit") {
+      // Verified (ADR 0013): file edits and shell commands are allowed, while the deny rules
+      // above still stop Edit/Write and recognised Bash writes (`>`, `cp`) on protected paths.
+      args.push("--permission-mode", "acceptEdits", "--allowedTools", "Bash");
+    }
     if (invocation.outputSchema !== undefined) {
       args.push("--json-schema", JSON.stringify(invocation.outputSchema));
     }

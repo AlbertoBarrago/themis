@@ -2,9 +2,10 @@ import type { AgentRole, ModelTier } from "../spec/types.js";
 
 /**
  * Tool access granted to an agent, in adapter-neutral terms. Each adapter maps these to its
- * own tool names. `edit` arrives with the worker in M4.
+ * own tool names. `edit` lets the agent change files and run shell commands, within the
+ * per-invocation protections.
  */
-export type ToolAccess = "none" | "read-only";
+export type ToolAccess = "none" | "read-only" | "edit";
 
 /** Spec roles (which have a model tier in the frontmatter) plus internal roles. */
 export type InvocationRole = AgentRole | "test-author";

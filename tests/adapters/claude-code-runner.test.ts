@@ -57,6 +57,8 @@ describe("ClaudeCodeRunner arguments", () => {
       "You plan.",
       "--settings",
       '{"permissions":{"deny":["Edit(./tests/acceptance/**)","Edit(./spec.md)"]}}',
+      "--setting-sources",
+      "project,local",
       "--tools",
       "",
       "--permission-prompts",
@@ -81,6 +83,14 @@ describe("ClaudeCodeRunner arguments", () => {
     expect(inlineDenyRule("spec.md")).toBe("Edit(./spec.md)");
     expect(inlineDenyRule("/spec.md")).toBe("Edit(./spec.md)");
     expect(inlineDenyRule("./.themis/**")).toBe("Edit(./.themis/**)");
+  });
+
+  it("grants edit tools with accepted edits and Bash, keeping the deny rules", () => {
+    const runner = new ClaudeCodeRunner({ executor: new FakeExecutor() });
+    const args = runner.args({ ...invocation, tools: "edit" });
+    expect(args[args.indexOf("--tools") + 1]).toBe("Read,Edit,Write,Bash,Grep,Glob");
+    expect(args.slice(-4)).toEqual(["--permission-mode", "acceptEdits", "--allowedTools", "Bash"]);
+    expect(args[args.indexOf("--settings") + 1]).toContain("Edit(./spec.md)");
   });
 
   it("grants read-only tools", () => {

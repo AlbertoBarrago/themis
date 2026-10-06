@@ -72,6 +72,10 @@ npm run build && node dist/cli/main.js check examples/webhook-service/spec.md
   `claude -p` also loads the user's global CLAUDE.md, so prompts must state anything that must
   not be overridden (e.g. output language). JSON Schemas sent with `--json-schema` must not
   carry a `$schema` key.
+- `themis run` (`src/run/run.ts`): Themis runs the verifier itself after every worker call;
+  only its exit code moves a task. `LimaExecutor` (`src/runtime/lima-executor.ts`) runs
+  commands in the VM via `limactl shell ... bash -lc 'exec "$@"'` (no quoting needed);
+  `scripts/lima/create-vm.sh` builds the VM. Never touch the user's other Lima instances.
 - Agent output is never trusted: `src/plan/validate.ts` checks the planner's graph against the
   spec before anything reaches the human gate.
 - Orchestrator logic must be testable with `FakeAgentRunner` and `FakeExecutor`.
