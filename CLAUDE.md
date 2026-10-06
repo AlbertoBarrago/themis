@@ -64,8 +64,13 @@ npm run build && node dist/cli/main.js check examples/webhook-service/spec.md
 - The CLI never calls LLM APIs directly: agents run through an `AgentRunner` interface (only a
   Claude Code adapter in the MVP; no other module may depend on Claude Code). Agent-specific
   protections such as `.claude/settings.json` are installed by the adapter, not by core code.
-- Project `.claude/settings.json` deny rules are not applied by `claude -p` in an untrusted
-  workspace (ADR 0006): the M4 runner must pass them per invocation.
+- `ClaudeCodeRunner` (`src/adapters/claude-code/runner.ts`) passes protections on every call as
+  inline `--settings` with `./`-prefixed rules: inline `Edit(/x)` is NOT enforced (ADR 0009).
+  `claude -p` also loads the user's global CLAUDE.md, so prompts must state anything that must
+  not be overridden (e.g. output language). JSON Schemas sent with `--json-schema` must not
+  carry a `$schema` key.
+- Agent output is never trusted: `src/plan/validate.ts` checks the planner's graph against the
+  spec before anything reaches the human gate.
 - Orchestrator logic must be testable with `FakeAgentRunner` and `FakeExecutor`.
 - Verify `claude` CLI flags and output format with `claude --help` and a test call before writing
   the adapter; do not assume them.

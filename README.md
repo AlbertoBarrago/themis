@@ -12,7 +12,7 @@ The point is not generating a plan. It is **guaranteeing convergence**: an immut
 contract, one verifier with semantic exit codes, guards against shortcuts, and a
 retrospective loop that improves the agent configuration over time.
 
-> Status: early development (milestone M1). The format is at version `0.1`.
+> Status: early development (milestone M2). The format is at version `0.1`.
 
 ## The format
 
@@ -43,6 +43,8 @@ Depends: none
 ```sh
 ordito check [spec.md] [--json]   # validate a spec, every error with line, column and field
 ordito init [--spec <path>] [--force] [--skip-install]
+ordito plan [--spec <path>] [--force]   # planner agent -> draft .ordito/tasks.json
+ordito approve plan                     # human gate
 ```
 
 `init` scaffolds a node-ts project if the folder has no `package.json` (an existing project is
@@ -55,7 +57,12 @@ only checked, never rewritten), then generates:
 
 Exit codes: `0` ok (warnings allowed), `1` invalid spec, `2` usage, environment or I/O error.
 
-Planned commands: `plan`, `approve plan`, `tests`, `approve tests`, `run`, `status`, `retro`.
+`plan` sends the spec to the planner agent (`claude -p`, no tools, structured output), then
+validates the graph against the spec: one task per criterion plus an optional `setup`, declared
+dependencies kept, added ones justified, no cycles. Invalid answers are retried up to three
+times. The planner's open questions are printed for the gate.
+
+Planned commands: `tests`, `approve tests`, `run`, `status`, `retro`.
 
 ## Development
 

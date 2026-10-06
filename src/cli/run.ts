@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
+import { approveCommand } from "./commands/approve.js";
 import { check } from "./commands/check.js";
 import { initCommand } from "./commands/init.js";
+import { planCommand } from "./commands/plan.js";
 import { type CliIo, ExitCode } from "./io.js";
 
 const HELP = `Usage: ordito <command> [options]
@@ -8,6 +10,8 @@ const HELP = `Usage: ordito <command> [options]
 Commands:
   check [spec]   Validate a spec file (default: spec.md)
   init           Prepare the project: verifier, guard, agent roles, protections
+  plan           Ask the planner for a task graph (draft .ordito/tasks.json)
+  approve plan   Approve the draft plan (human gate)
 
 Options:
   -h, --help     Show help
@@ -16,7 +20,12 @@ Options:
 
 type Command = (args: string[], io: CliIo) => Promise<ExitCode>;
 
-const COMMANDS: Record<string, Command> = { check, init: (args, io) => initCommand(args, io) };
+const COMMANDS: Record<string, Command> = {
+  check,
+  init: (args, io) => initCommand(args, io),
+  plan: (args, io) => planCommand(args, io),
+  approve: approveCommand,
+};
 
 /** Dispatches a command line (without the node and script arguments) and returns the exit code. */
 export async function runCli(argv: string[], io: CliIo): Promise<ExitCode> {
