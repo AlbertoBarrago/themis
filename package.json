@@ -9,6 +9,7 @@
   },
   "files": [
     "dist",
+    "templates",
     "SPEC_FORMAT.md"
   ],
   "engines": {

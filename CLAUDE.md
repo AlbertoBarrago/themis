@@ -45,6 +45,17 @@ npm run build && node dist/cli/main.js check examples/webhook-service/spec.md
 - CLI: `src/cli/run.ts` `runCli(argv, io)` dispatches commands and returns an exit code;
   `main.ts` is the only place touching `process`. Commands take an injected `CliIo` so tests run
   in-process. Arguments are parsed with `node:util` `parseArgs` (no CLI library).
+- `ordito init` (`src/init/init.ts`) validates everything before writing: spec, then project
+  detection (`src/stack/node-ts/detect.ts`), then agent guards, then generated files. Generated
+  files go through `writeGenerated` (`src/fs/generated.ts`): identical content is left alone,
+  different content is skipped unless `--force`.
+- `templates/` ships with the package and is read at runtime via `src/templates.ts`
+  (placeholders `__ORDITO_<KEY>__`). `templates/node-ts/verify.sh` and `guard.mjs` are the
+  generated verifier; `guard.mjs` is plain JS type-checked through `checkJs`. Their behavior
+  is specified in ADR 0007 and tested by running them for real (`tests/stack/`, with stub
+  binaries; `tests/e2e/` with the real toolchain via Ordito's own `node_modules`).
+- Process execution goes through `Executor` (`src/runtime/`); agent-specific code lives only
+  in `src/adapters/<agent>/` and is reached through `src/adapters/registry.ts`.
 - Exit codes everywhere mirror the verifier contract: `0` ok, `1` fixable input/code problem,
   `2` usage, environment or internal error.
 
@@ -53,8 +64,8 @@ npm run build && node dist/cli/main.js check examples/webhook-service/spec.md
 - The CLI never calls LLM APIs directly: agents run through an `AgentRunner` interface (only a
   Claude Code adapter in the MVP; no other module may depend on Claude Code). Agent-specific
   protections such as `.claude/settings.json` are installed by the adapter, not by core code.
-- Commands run through an `Executor` interface (only `LocalExecutor` in the MVP), so a sandboxed
-  executor can be added without touching the orchestrator.
+- Project `.claude/settings.json` deny rules are not applied by `claude -p` in an untrusted
+  workspace (ADR 0006): the M4 runner must pass them per invocation.
 - Orchestrator logic must be testable with `FakeAgentRunner` and `FakeExecutor`.
 - Verify `claude` CLI flags and output format with `claude --help` and a test call before writing
   the adapter; do not assume them.

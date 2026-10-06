@@ -1,11 +1,13 @@
 import { readFileSync } from "node:fs";
 import { check } from "./commands/check.js";
+import { initCommand } from "./commands/init.js";
 import { type CliIo, ExitCode } from "./io.js";
 
 const HELP = `Usage: ordito <command> [options]
 
 Commands:
   check [spec]   Validate a spec file (default: spec.md)
+  init           Prepare the project: verifier, guard, agent roles, protections
 
 Options:
   -h, --help     Show help
@@ -14,7 +16,7 @@ Options:
 
 type Command = (args: string[], io: CliIo) => Promise<ExitCode>;
 
-const COMMANDS: Record<string, Command> = { check };
+const COMMANDS: Record<string, Command> = { check, init: (args, io) => initCommand(args, io) };
 
 /** Dispatches a command line (without the node and script arguments) and returns the exit code. */
 export async function runCli(argv: string[], io: CliIo): Promise<ExitCode> {

@@ -12,7 +12,7 @@ The point is not generating a plan. It is **guaranteeing convergence**: an immut
 contract, one verifier with semantic exit codes, guards against shortcuts, and a
 retrospective loop that improves the agent configuration over time.
 
-> Status: early development (milestone M0). The format is at version `0.1`.
+> Status: early development (milestone M1). The format is at version `0.1`.
 
 ## The format
 
@@ -42,12 +42,20 @@ Depends: none
 
 ```sh
 ordito check [spec.md] [--json]   # validate a spec, every error with line, column and field
+ordito init [--spec <path>] [--force] [--skip-install]
 ```
 
-Exit codes: `0` valid (warnings allowed), `1` invalid spec, `2` usage or I/O error.
+`init` scaffolds a node-ts project if the folder has no `package.json` (an existing project is
+only checked, never rewritten), then generates:
 
-Planned commands: `init`, `plan`, `approve plan`, `tests`, `approve tests`, `run`, `status`,
-`retro`.
+- `.ordito/verify.sh`: the verifier (`0` pass, `1` the code is wrong, `2` the environment is
+  broken), with `.ordito/guard.mjs` for the contract and forbidden-marker checks.
+- `.ordito/agents/`: planner, worker, reviewer and retro instructions.
+- `.claude/settings.json` deny rules protecting the contract (agent adapter: Claude Code).
+
+Exit codes: `0` ok (warnings allowed), `1` invalid spec, `2` usage, environment or I/O error.
+
+Planned commands: `plan`, `approve plan`, `tests`, `approve tests`, `run`, `status`, `retro`.
 
 ## Development
 
