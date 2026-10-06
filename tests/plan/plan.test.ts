@@ -316,7 +316,7 @@ describe("CLI through the real Claude Code runner", () => {
   it("blocks the gate on blocking questions until forced", async () => {
     expect(await planCommand([], io(), claude(BLOCKED))).toBe(0);
     expect(out).toContain(
-      "Blocking questions (fix the spec and re-run ordito plan):\n  ! AC-1 contradicts the decisions.",
+      "Blocking questions (fix the spec and redo this step):\n  ! AC-1 contradicts the decisions.",
     );
     expect(out).toContain("resolve the blocking questions in the spec, then re-run ordito plan");
 

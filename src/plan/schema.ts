@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { question, storedQuestions, toAgentJsonSchema } from "../agents/questions.js";
+
+export type { Question } from "../agents/questions.js";
 
 export const SETUP_TASK = "setup";
 const TASK_ID = /^(setup|AC-[1-9]\d*)$/;
@@ -16,19 +19,6 @@ const plannedTask = z.strictObject({
   addedDependencies: z.array(addedDependency),
 });
 
-/**
- * `blocking`: the criteria are contradictory or cannot be verified as written; the plan gate
- * refuses until it is resolved. `minor`: an implementation detail a worker can decide and
- * record. See ADR 0010.
- */
-export const QUESTION_SEVERITIES = ["blocking", "minor"] as const;
-
-const question = z.strictObject({
-  text: z.string().min(1),
-  severity: z.enum(QUESTION_SEVERITIES),
-});
-export type Question = z.infer<typeof question>;
-
 /** What the planner agent must return. Its JSON Schema is sent with the call. */
 export const plannerOutput = z.strictObject({
   tasks: z.array(plannedTask).min(1),
@@ -37,15 +27,8 @@ export const plannerOutput = z.strictObject({
 export type PlannerOutput = z.infer<typeof plannerOutput>;
 export type PlannedTask = z.infer<typeof plannedTask>;
 
-/**
- * JSON Schema sent with the planner call. The `$schema` key is dropped: zod declares draft
- * 2020-12, which `claude --json-schema` rejects ("no schema with key or ref"), observed with
- * Claude Code 2.1.290.
- */
-export const plannerOutputJsonSchema: Record<string, unknown> = (() => {
-  const { $schema: _dialect, ...schema } = z.toJSONSchema(plannerOutput) as Record<string, unknown>;
-  return schema;
-})();
+/** JSON Schema sent with the planner call (see {@link toAgentJsonSchema}). */
+export const plannerOutputJsonSchema = toAgentJsonSchema(plannerOutput);
 
 /** `.ordito/tasks.json`, see ADR 0010. */
 export const tasksFile = z.strictObject({
@@ -56,11 +39,7 @@ export const tasksFile = z.strictObject({
   createdAt: z.string(),
   approvedAt: z.string().nullable(),
   tasks: z.array(plannedTask),
-  // Plans written before severities existed stored bare strings; they are read as blocking,
-  // the conservative choice, so an old draft cannot slip through the gate unreviewed.
-  questions: z.array(
-    z.union([question, z.string().transform((text): Question => ({ text, severity: "blocking" }))]),
-  ),
+  questions: storedQuestions,
 });
 export type TasksFile = z.output<typeof tasksFile>;
 

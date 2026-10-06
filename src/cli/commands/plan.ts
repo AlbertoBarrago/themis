@@ -1,6 +1,8 @@
 import { parseArgs } from "node:util";
 import { availableAgents, DEFAULT_AGENT, runnerFor } from "../../adapters/registry.js";
-import { type PlanTotals, plan, TasksFileError } from "../../plan/plan.js";
+import { formatQuestions } from "../../agents/format.js";
+import { formatTotals } from "../../agents/structured.js";
+import { plan, TasksFileError } from "../../plan/plan.js";
 import type { TasksFile } from "../../plan/schema.js";
 import type { Executor } from "../../runtime/executor.js";
 import { LocalExecutor } from "../../runtime/local-executor.js";
@@ -77,23 +79,23 @@ export async function planCommand(
       return ExitCode.Usage;
     case "agent-unavailable":
       io.stderr(
-        `ordito plan: agent unavailable: ${outcome.message}\n${formatTotals(outcome.totals)}`,
+        `ordito plan: agent unavailable: ${outcome.message}\n${formatTotals("planner", outcome.totals)}`,
       );
       return ExitCode.Usage;
     case "agent-failed":
       io.stderr(
-        `ordito plan: the planner failed: ${outcome.message}\n${formatTotals(outcome.totals)}`,
+        `ordito plan: the planner failed: ${outcome.message}\n${formatTotals("planner", outcome.totals)}`,
       );
       return ExitCode.Usage;
     case "invalid-plan":
       io.stderr(
         `ordito plan: no valid plan after ${outcome.totals.attempts} attempts:\n${outcome.errors.map((e) => `  - ${e}\n`).join("")}` +
-          `Consider making the spec more explicit. Planner logs: .ordito/runs/plan/\n${formatTotals(outcome.totals)}`,
+          `Consider making the spec more explicit. Planner logs: .ordito/runs/plan/\n${formatTotals("planner", outcome.totals)}`,
       );
       return ExitCode.Invalid;
     case "done":
       io.stdout(formatPlan(outcome.tasks));
-      io.stdout(formatTotals(outcome.totals));
+      io.stdout(formatTotals("planner", outcome.totals));
       io.stdout(
         outcome.tasks.questions.some((q) => q.severity === "blocking")
           ? "draft written to .ordito/tasks.json; resolve the blocking questions in the spec, then re-run ordito plan\n"
@@ -115,21 +117,6 @@ export function formatPlan(tasks: TasksFile): string {
       lines.push(`       + depends on ${added.id}: ${added.reason}`);
     }
   });
-  const blocking = tasks.questions.filter((q) => q.severity === "blocking");
-  const minor = tasks.questions.filter((q) => q.severity === "minor");
-  if (blocking.length > 0) {
-    lines.push("", "Blocking questions (fix the spec and re-run ordito plan):");
-    for (const q of blocking) lines.push(`  ! ${q.text}`);
-  }
-  if (minor.length > 0) {
-    lines.push("", "Minor questions (left to the workers, who decide and record the choice):");
-    for (const q of minor) lines.push(`  ? ${q.text}`);
-  }
-  return `${lines.join("\n")}\n\n`;
-}
-
-function formatTotals(totals: PlanTotals): string {
-  const cost = totals.costUsd === null ? "" : `, $${totals.costUsd.toFixed(4)}`;
-  const attempts = `${totals.attempts} ${totals.attempts === 1 ? "attempt" : "attempts"}`;
-  return `planner: ${attempts}, ${(totals.durationMs / 1000).toFixed(1)}s${cost}\n`;
+  const questions = formatQuestions(tasks.questions);
+  return `${lines.join("\n")}\n${questions}\n`;
 }

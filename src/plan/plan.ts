@@ -1,6 +1,8 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { AgentRunner, AgentUsage } from "../adapters/agent-runner.js";
+import type { z } from "zod";
+import type { AgentRunner } from "../adapters/agent-runner.js";
+import { callStructured, type Totals } from "../agents/structured.js";
 import { sha256 } from "../fs/digest.js";
 import { isNotFound, readIfExists } from "../fs/generated.js";
 import type { Diagnostic } from "../spec/diagnostics.js";
@@ -18,8 +20,6 @@ import {
 import { validatePlan } from "./validate.js";
 
 export const PLANNER_INSTRUCTIONS = ".ordito/agents/planner.md";
-const RUNS_DIR = ".ordito/runs/plan";
-const MAX_ATTEMPTS = 3;
 
 export interface PlanOptions {
   root: string;
@@ -29,11 +29,7 @@ export interface PlanOptions {
   now?: () => Date;
 }
 
-export interface PlanTotals {
-  attempts: number;
-  durationMs: number;
-  costUsd: number | null;
-}
+export type PlanTotals = Totals;
 
 export type PlanOutcome =
   | { kind: "not-initialized"; message: string }
@@ -104,7 +100,7 @@ export async function writeTasks(root: string, tasks: TasksFile): Promise<void> 
 /**
  * `ordito plan`: asks the planner agent for a task graph, validates it against the spec and
  * writes a draft `.ordito/tasks.json` for the human gate. Rejected answers are sent back with
- * the reasons, up to {@link MAX_ATTEMPTS} attempts. Every call is logged under
+ * the reasons (see {@link callStructured}). Every call is logged under
  * `.ordito/runs/plan/`.
  */
 export async function plan(options: PlanOptions): Promise<PlanOutcome> {
@@ -125,11 +121,12 @@ export async function plan(options: PlanOptions): Promise<PlanOutcome> {
   const existing = await readTasks(root);
   if (existing?.status === "approved" && !options.force) return { kind: "already-approved" };
 
-  const totals: PlanTotals = { attempts: 0, durationMs: 0, costUsd: null };
-  let rejected: string[] = [];
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const startedAt = now();
-    const result = await runner.run({
+  const outcome = await callStructured({
+    runner,
+    root,
+    logDir: "plan",
+    now,
+    invocation: (rejected) => ({
       role: "planner",
       tier: spec.frontmatter.models.planner,
       cwd: root,
@@ -138,41 +135,25 @@ export async function plan(options: PlanOptions): Promise<PlanOutcome> {
       tools: "none",
       protectedPaths: protectedPaths(specPath),
       outputSchema: plannerOutputJsonSchema,
-    });
-    totals.attempts = attempt;
-    totals.durationMs += result.durationMs;
-    totals.costUsd = addCost(totals.costUsd, result.usage);
+    }),
+    validate: (structured) => {
+      const parsed = plannerOutput.safeParse(structured);
+      if (!parsed.success) return { ok: false, errors: zodErrors(parsed.error) };
+      const validation = validatePlan(spec, parsed.data);
+      return validation.ok
+        ? { ok: true, value: { tasks: validation.tasks, questions: parsed.data.questions } }
+        : validation;
+    },
+  });
 
-    if (!result.ok) {
-      await logRun(root, startedAt, attempt, {
-        ok: false,
-        kind: result.kind,
-        error: result.error,
-        usage: result.usage,
-        durationMs: result.durationMs,
-      });
-      return result.kind === "unavailable"
-        ? { kind: "agent-unavailable", message: result.error, totals }
-        : { kind: "agent-failed", message: result.error, totals };
-    }
-
-    const parsed = plannerOutput.safeParse(result.structured);
-    const validation = parsed.success
-      ? validatePlan(spec, parsed.data)
-      : {
-          ok: false as const,
-          errors: parsed.error.issues.map((i) => `${i.path.join(".") || "output"}: ${i.message}`),
-        };
-    await logRun(root, startedAt, attempt, {
-      ok: validation.ok,
-      structured: result.structured,
-      errors: validation.ok ? [] : validation.errors,
-      usage: result.usage,
-      durationMs: result.durationMs,
-      permissionDenials: result.permissionDenials,
-    });
-
-    if (validation.ok && parsed.success) {
+  switch (outcome.kind) {
+    case "unavailable":
+      return { kind: "agent-unavailable", message: outcome.message, totals: outcome.totals };
+    case "failed":
+      return { kind: "agent-failed", message: outcome.message, totals: outcome.totals };
+    case "invalid":
+      return { kind: "invalid-plan", errors: outcome.errors, totals: outcome.totals };
+    case "ok": {
       const tasks: TasksFile = {
         ordito: "0.1",
         spec: specPath,
@@ -180,15 +161,18 @@ export async function plan(options: PlanOptions): Promise<PlanOutcome> {
         status: "draft",
         createdAt: now().toISOString(),
         approvedAt: null,
-        tasks: validation.tasks,
-        questions: parsed.data.questions,
+        tasks: outcome.value.tasks,
+        questions: outcome.value.questions,
       };
       await writeTasks(root, tasks);
-      return { kind: "done", tasks, totals };
+      return { kind: "done", tasks, totals: outcome.totals };
     }
-    rejected = validation.ok ? [] : validation.errors;
   }
-  return { kind: "invalid-plan", errors: rejected, totals };
+}
+
+/** Zod issues as `path: message` lines, the format agents receive when an answer is rejected. */
+export function zodErrors(error: z.ZodError): string[] {
+  return error.issues.map((i) => `${i.path.join(".") || "output"}: ${i.message}`);
 }
 
 export type ApproveOutcome =
@@ -230,24 +214,4 @@ export async function approvePlan(
   const approved: TasksFile = { ...tasks, status: "approved", approvedAt: now().toISOString() };
   await writeTasks(root, approved);
   return { kind: "approved", tasks: approved };
-}
-
-function addCost(total: number | null, usage: AgentUsage | null): number | null {
-  if (usage?.costUsd === null || usage?.costUsd === undefined) return total;
-  return (total ?? 0) + usage.costUsd;
-}
-
-async function logRun(
-  root: string,
-  startedAt: Date,
-  attempt: number,
-  entry: Record<string, unknown>,
-) {
-  const dir = join(root, RUNS_DIR);
-  await mkdir(dir, { recursive: true });
-  const stamp = startedAt.toISOString().replaceAll(":", "-");
-  await writeFile(
-    join(dir, `${stamp}-${attempt}.json`),
-    `${JSON.stringify({ role: "planner", attempt, startedAt: startedAt.toISOString(), ...entry }, null, 2)}\n`,
-  );
 }
