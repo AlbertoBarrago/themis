@@ -93,6 +93,7 @@ npm run build && node dist/cli/main.js check examples/webhook-service/spec.md
   optional fields conditionally instead of assigning `undefined`. ESM imports use `.js` suffixes.
 - Tests build fixtures with the `lines(...)` helper in `tests/helpers.ts` so line numbers in
   assertions are countable.
-- VCS is `jj` colocated with git, with one bookmark per milestone (`m0-spec-format`, ...).
+- VCS is `jj` colocated with git. Work directly on `main` (`jj bookmark set main -r @-` after
+  each change); bookmarks only when a PR is actually wanted.
   Each milestone ends with green `npm run check`, a summary, and a stop for user approval
   before describing/committing.
