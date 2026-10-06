@@ -1,55 +1,77 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Themis: spec-driven agentic development</title>
-  <meta name="description" content="An open format and a reference CLI for spec-driven agentic development with a verification loop. Humans own the spec and the locked tests; agents write code until one verifier passes.">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <header class="top">
-    <nav class="wrap nav">
-      <a class="brand" href="./">
-        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#scales"/></svg>
-        Themis
-      </a>
-      <ul>
-        <li><a href="#how">How it works</a></li>
-        <li><a href="#format">Format</a></li>
-        <li><a href="https://github.com/AlbertoBarrago/themis/wiki">Wiki</a></li>
-        <li><a href="https://github.com/AlbertoBarrago/themis">GitHub</a></li>
-      </ul>
-    </nav>
-  </header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Themis: spec-driven agentic development</title>
+    <meta
+      name="description"
+      content="An open format and a reference CLI for spec-driven agentic development with a verification loop. Humans own the spec and the locked tests; agents write code until one verifier passes."
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <svg width="0" height="0" class="sprite" aria-hidden="true">
+      <symbol id="scales" viewBox="0 0 32 32">
+        <g
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M16 4v24M10 28h12M5 9h22" />
+          <path d="M5 9l-3.5 9a3.5 3.5 0 0 0 7 0z" />
+          <path d="M27 9l-3.5 9a3.5 3.5 0 0 0 7 0z" />
+          <circle cx="16" cy="5" r="1.2" fill="currentColor" />
+        </g>
+      </symbol>
+    </svg>
 
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <symbol id="scales" viewBox="0 0 32 32">
-      <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M16 4v24M10 28h12M5 9h22"/>
-        <path d="M5 9l-3.5 9a3.5 3.5 0 0 0 7 0z"/>
-        <path d="M27 9l-3.5 9a3.5 3.5 0 0 0 7 0z"/>
-        <circle cx="16" cy="5" r="1.2" fill="currentColor"/>
-      </g>
-    </symbol>
-  </svg>
+    <header class="top">
+      <nav class="wrap nav">
+        <a class="brand" href="./">
+          <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#scales" /></svg>
+          Themis
+        </a>
+        <ul>
+          <li class="hide-sm"><a href="#how">How it works</a></li>
+          <li class="hide-sm"><a href="#format">Format</a></li>
+          <li><a href="https://github.com/AlbertoBarrago/themis/wiki">Wiki</a></li>
+          <li><a class="nav-cta" href="https://github.com/AlbertoBarrago/themis">GitHub</a></li>
+        </ul>
+      </nav>
+    </header>
 
-  <main>
-    <section class="hero wrap">
-      <p class="eyebrow">Open format &middot; reference CLI &middot; spec version 0.1</p>
-      <h1>Humans lay down the law.<br>Agents do the work.<br><em>One verifier judges.</em></h1>
-      <p class="lede">
-        Themis is a format and a CLI for spec-driven agentic development. You write a
-        <code>spec.md</code> with decisions and acceptance criteria and approve acceptance tests
-        that lock it into a contract. Coding agents then iterate until a single verifier
-        passes. The point is not generating a plan; it is <strong>guaranteeing convergence</strong>.
-      </p>
-      <div class="cta">
-        <a class="button primary" href="https://github.com/AlbertoBarrago/themis">View on GitHub</a>
-        <a class="button" href="https://github.com/AlbertoBarrago/themis/blob/main/SPEC_FORMAT.md">Read the format</a>
-      </div>
-      <pre class="terminal"><code><span class="dim">$</span> themis run
+    <main>
+      <section class="section hero">
+        <div class="wrap">
+          <p class="eyebrow">Open format &middot; Reference CLI &middot; Spec v0.1</p>
+          <h1>
+            Humans lay down the law.<br />
+            Agents do the work.<br />
+            <em>One verifier judges.</em>
+          </h1>
+          <p class="lede">
+            Themis is a format and a CLI for spec-driven agentic development. You write a
+            <code>spec.md</code> with decisions and acceptance criteria, then lock acceptance tests
+            that turn it into a contract. Coding agents iterate until a single verifier passes. The
+            point is not generating a plan; it is <strong>guaranteeing convergence</strong>.
+          </p>
+          <div class="cta">
+            <a class="button primary" href="https://github.com/AlbertoBarrago/themis"
+              >View on GitHub</a
+            >
+            <a class="button" href="https://github.com/AlbertoBarrago/themis/wiki">Read the wiki</a>
+          </div>
+
+          <figure class="window hero-window">
+            <div class="window-bar">
+              <span></span><span></span><span></span>
+              <p>themis run</p>
+            </div>
+            <pre><code><span class="dim">$</span> themis run
 AC-1 iteration 1: review asked for changes
     - Scope creep: custom-separator support belongs to AC-2.
 AC-1 iteration 2: review approved; merging...
@@ -61,90 +83,198 @@ AC-3: merged and verified
 <span class="ok">AC-1: done after 2 iterations
 AC-2: done after 1 iteration
 AC-3: done after 2 iterations</span></code></pre>
-    </section>
+          </figure>
+        </div>
+      </section>
 
-    <section class="band">
-      <div class="wrap split">
-        <div>
-          <h2>The law and the work</h2>
-          <p>
-            Themis is the Titaness of divine law and order: she lays down what is right, and her
-            scales weigh what is done against it. The format separates the two.
+      <section class="section band">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">The idea</p>
+            <h2>The law and the work</h2>
+            <p class="section-lede">
+              Themis is the Titaness of divine law and order: she lays down what is right, and her
+              scales weigh what is done against it. The format keeps the two apart.
+            </p>
+          </header>
+          <div class="pair">
+            <article class="card">
+              <p class="card-kicker">Owned by humans</p>
+              <h3>The law</h3>
+              <p>
+                The spec, with its decisions and acceptance criteria, and the acceptance tests that
+                turn it into an executable contract. Once locked, agents read it and never change
+                it.
+              </p>
+            </article>
+            <article class="card">
+              <p class="card-kicker">Produced by agents</p>
+              <h3>The work</h3>
+              <p>
+                The implementation, iterated until the verifier passes. What an agent claims never
+                counts: only the verifier's exit code moves a task forward.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="how" class="section">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">How it works</p>
+            <h2>Three human gates, and only three</h2>
+            <p class="section-lede">
+              You decide <em>what</em> and <em>when it is done</em>. Agents decide <em>how</em>.
+              The verifier decides <em>whether they did it</em>.
+            </p>
+          </header>
+          <ol class="flow">
+            <li>
+              <span class="num">1</span>
+              <div>
+                <p class="cmd">spec.md</p>
+                <p>
+                  You write decisions and acceptance criteria. <code>themis check</code> reports
+                  every problem with line, column and field.
+                </p>
+              </div>
+            </li>
+            <li>
+              <span class="num">2</span>
+              <div>
+                <p class="cmd">themis init</p>
+                <p>Generates the judge: the verifier and the guard. No AI involved.</p>
+              </div>
+            </li>
+            <li class="gate">
+              <span class="num">3</span>
+              <div>
+                <p class="cmd">themis plan</p>
+                <p>
+                  A planner agent proposes the task graph, checked mechanically against the spec,
+                  and raises questions about ambiguities.
+                </p>
+              </div>
+              <span class="badge">Gate 1 &middot; approve plan</span>
+            </li>
+            <li class="gate">
+              <span class="num">4</span>
+              <div>
+                <p class="cmd">themis tests</p>
+                <p>
+                  A test-author agent writes the acceptance tests. You read them, edit them if
+                  needed, and lock them by digest.
+                </p>
+              </div>
+              <span class="badge">Gate 2 &middot; approve tests</span>
+            </li>
+            <li>
+              <span class="num">5</span>
+              <div>
+                <p class="cmd">themis run</p>
+                <p>
+                  Every task in its own git worktree, in parallel where the graph allows, with no
+                  human involved until the end.
+                </p>
+              </div>
+            </li>
+            <li class="gate">
+              <span class="num">6</span>
+              <div>
+                <p class="cmd">themis retro</p>
+                <p>
+                  A retro agent proposes changes to the agents' instructions, each citing the
+                  evidence from the run it addresses.
+                </p>
+              </div>
+              <span class="badge">Gate 3 &middot; approve retro</span>
+            </li>
+          </ol>
+          <p class="callout">
+            The second gate matters most. Once the tests are locked, &ldquo;done&rdquo; means
+            <code>.themis/verify.sh</code> exits <code>0</code>, and nobody needs to ask you again.
           </p>
         </div>
-        <dl class="pair">
-          <div>
-            <dt>The law, owned by humans</dt>
-            <dd>The spec (decisions and acceptance criteria) and the locked acceptance tests that
-              turn it into an executable contract. Agents read it and never change it.</dd>
-          </div>
-          <div>
-            <dt>The work, produced by agents</dt>
-            <dd>The implementation, iterated until the verifier passes. What an agent claims
-              never counts; only the verifier's exit code moves a task.</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
+      </section>
 
-    <section id="how" class="wrap">
-      <h2>How it works</h2>
-      <p class="section-lede">Three human gates, and only three. Everything else is decided by the verifier.</p>
-      <ol class="flow">
-        <li>
-          <span class="step">spec.md</span>
-          <p>You write decisions and acceptance criteria. <code>themis check</code> reports every problem with line, column and field.</p>
-        </li>
-        <li>
-          <span class="step">themis init</span>
-          <p>Generates the judge: the verifier and the guard. No AI involved.</p>
-        </li>
-        <li class="gate">
-          <span class="step">themis plan</span>
-          <p>A planner agent proposes the task graph, checked mechanically against the spec, plus questions about ambiguities.</p>
-          <span class="badge">Gate 1 &middot; approve plan</span>
-        </li>
-        <li class="gate">
-          <span class="step">themis tests</span>
-          <p>A test-author agent writes the acceptance tests. You read them, edit them if needed, and lock them by digest.</p>
-          <span class="badge">Gate 2 &middot; approve tests</span>
-        </li>
-        <li>
-          <span class="step">themis run</span>
-          <p>Per task, in its own git worktree, no human involved: worker edits, Themis verifies, a reviewer reads the diff, Themis merges and verifies again.</p>
-        </li>
-        <li class="gate">
-          <span class="step">themis retro</span>
-          <p>A retro agent proposes changes to the agents' instructions, each citing the evidence from the run it addresses.</p>
-          <span class="badge">Gate 3 &middot; approve retro</span>
-        </li>
-      </ol>
-      <p class="note">The second gate matters most: once the tests are locked, &ldquo;done&rdquo; means
-        <code>.themis/verify.sh</code> exits <code>0</code>, and nobody needs to ask you again.</p>
-    </section>
-
-    <section id="format" class="band">
-      <div class="wrap split">
-        <div>
-          <h2>A spec is a Markdown file</h2>
-          <p>
-            YAML frontmatter, a <code>## Decisions</code> section the agents must respect, and one
-            <code>## AC-&lt;n&gt;</code> section per acceptance criterion. Each criterion is a node of
-            the task graph and a group of tests named <code>AC-&lt;n&gt;: ...</code>.
-          </p>
-          <p>
-            <a href="https://github.com/AlbertoBarrago/themis/blob/main/SPEC_FORMAT.md">SPEC_FORMAT.md</a>
-            is normative and usable without the CLI: a team can write specs, lock tests and run a
-            verifier by hand.
+      <section class="section band">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Inside a run</p>
+            <h2>Every iteration, the same loop</h2>
+            <p class="section-lede">
+              Each task works on its own branch, up to <code>limits.parallel</code> at once. An
+              iteration that fails costs one of <code>limits.max_iterations</code>, and the next one
+              starts with the reason.
+            </p>
+          </header>
+          <ol class="loop">
+            <li>
+              <span class="num">1</span>
+              <h3>Sync</h3>
+              <p>The worktree takes in what was merged meanwhile.</p>
+            </li>
+            <li>
+              <span class="num">2</span>
+              <h3>Work</h3>
+              <p>The worker agent edits the code for this task only.</p>
+            </li>
+            <li>
+              <span class="num">3</span>
+              <h3>Verify</h3>
+              <p>Themis runs the verifier itself. The agent's claims do not count.</p>
+            </li>
+            <li>
+              <span class="num">4</span>
+              <h3>Review</h3>
+              <p>A read-only reviewer rejects scope creep and faked behaviour.</p>
+            </li>
+            <li>
+              <span class="num">5</span>
+              <h3>Merge</h3>
+              <p>Merged and verified again; Themis undoes its own merge if it fails.</p>
+            </li>
+          </ol>
+          <p class="footnote">
+            State is saved after every step: interrupt with Ctrl-C and run again to resume. Themis
+            never commits your changes and never rewrites history it did not just write.
           </p>
         </div>
-        <pre class="code"><code><span class="c">---</span>
+      </section>
+
+      <section id="format" class="section">
+        <div class="wrap split">
+          <div>
+            <p class="eyebrow">The format</p>
+            <h2>A spec is a Markdown file</h2>
+            <p>
+              YAML frontmatter, a <code>## Decisions</code> section the agents must respect, and one
+              <code>## AC-&lt;n&gt;</code> section per acceptance criterion.
+            </p>
+            <p>
+              Each criterion is a node of the task graph, the unit of work for an agent, and a group
+              of tests named <code>AC-&lt;n&gt;: ...</code>.
+            </p>
+            <p>
+              <a href="https://github.com/AlbertoBarrago/themis/blob/main/SPEC_FORMAT.md"
+                >SPEC_FORMAT.md</a
+              >
+              is normative and usable without the CLI: a team can write specs, lock tests and run a
+              verifier by hand.
+            </p>
+          </div>
+          <figure class="window">
+            <div class="window-bar">
+              <span></span><span></span><span></span>
+              <p>spec.md</p>
+            </div>
+            <pre><code><span class="dim">---</span>
 <span class="k">themis:</span> 0.1
 <span class="k">stack:</span> node-ts
 <span class="k">verify:</span> [typecheck, lint, unit, acceptance]
 <span class="k">limits:</span> { max_iterations: 5, parallel: 3 }
-<span class="k">models:</span> { planner: strong, worker: fast, reviewer: strong }
-<span class="c">---</span>
+<span class="dim">---</span>
 
 <span class="h"># Greeting service</span>
 
@@ -156,81 +286,171 @@ Depends: none
 - Given the name "Ada"
 - When greet is called
 - Then it returns "Hello, Ada"</code></pre>
-      </div>
-    </section>
+          </figure>
+        </div>
+      </section>
 
-    <section class="wrap">
-      <h2>What Themis guarantees</h2>
-      <div class="grid">
-        <article>
-          <h3>One judge</h3>
-          <p>Only the verifier's exit code moves a task. Themis runs it itself, in the task's worktree and again after merging.</p>
-        </article>
-        <article>
-          <h3>An immutable contract</h3>
-          <p>Every locked file is recorded by SHA-256. Any change fails the guard, and so does any <code>.only(</code>, <code>@ts-ignore</code>, <code>as any</code> or linter suppression added after the lock.</p>
-        </article>
-        <article>
-          <h3>A reviewer against scope creep</h3>
-          <p>A read-only reviewer judges the committed diff. Implementing a neighbouring criterion, faking behaviour or breaking a decision costs an iteration.</p>
-        </article>
-        <article>
-          <h3>Agent output is never trusted</h3>
-          <p>Plans, tests, verdicts and retrospective proposals are validated mechanically before they reach you or the repository.</p>
-        </article>
-        <article>
-          <h3>Semantic exit codes</h3>
-          <p><code>0</code> pass, <code>1</code> the code is wrong (fix and retry), <code>2</code> the environment is broken (stop, a human is needed). The same convention everywhere.</p>
-        </article>
-        <article>
-          <h3>Isolation when you want it</h3>
-          <p>With <code>--executor lima</code>, agents, git, npm and the verifier run in a dedicated VM that only sees your workspace folder.</p>
-        </article>
-      </div>
-    </section>
+      <section class="section band">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">The verifier</p>
+            <h2>One judge, three answers</h2>
+            <p class="section-lede">
+              Every command and the verifier itself share one convention, so a loop always knows
+              whether to retry or to stop.
+            </p>
+          </header>
+          <div class="codes">
+            <article class="code-tile pass">
+              <span class="code-num">0</span>
+              <h3>Pass</h3>
+              <p>The criterion is satisfied. The task moves on.</p>
+            </article>
+            <article class="code-tile retry">
+              <span class="code-num">1</span>
+              <h3>The code is wrong</h3>
+              <p>The agent reads <code>.verify.log</code>, fixes the implementation, retries.</p>
+            </article>
+            <article class="code-tile stop">
+              <span class="code-num">2</span>
+              <h3>The environment is broken</h3>
+              <p>The loop stops. A missing tool or a corrupt lock needs a human.</p>
+            </article>
+          </div>
+        </div>
+      </section>
 
-    <section class="band">
-      <div class="wrap">
-        <h2>Quick start</h2>
-        <p class="section-lede">Node.js 22+, git, and <a href="https://claude.com/claude-code">Claude Code</a> logged in. Not on npm yet: install from a clone with <code>npm install &amp;&amp; npm run build &amp;&amp; npm link</code>.</p>
-        <pre class="terminal"><code><span class="dim">$</span> themis check                 <span class="dim"># validate spec.md</span>
-<span class="dim">$</span> themis init                  <span class="dim"># verifier, guard, agent roles</span>
-<span class="dim">$</span> themis plan &amp;&amp; themis approve plan
-<span class="dim">$</span> themis tests &amp;&amp; themis approve tests
-<span class="dim">$</span> themis run                   <span class="dim"># until every task is done</span>
+      <section class="section">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Guarantees</p>
+            <h2>Built so that agents cannot cut corners</h2>
+          </header>
+          <div class="grid">
+            <article class="card">
+              <h3>One judge</h3>
+              <p>
+                Only the verifier's exit code moves a task. Themis runs it in the task's worktree,
+                and again after merging.
+              </p>
+            </article>
+            <article class="card">
+              <h3>An immutable contract</h3>
+              <p>
+                Locked files are recorded by SHA-256. Any change fails the guard, and so does any
+                <code>.only(</code>, <code>@ts-ignore</code> or <code>as any</code> added later.
+              </p>
+            </article>
+            <article class="card">
+              <h3>No scope creep</h3>
+              <p>
+                A read-only reviewer judges every diff. Implementing a neighbouring criterion or
+                faking behaviour costs an iteration.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Output never trusted</h3>
+              <p>
+                Plans, tests, verdicts and retrospective proposals are validated mechanically before
+                they reach you or the repository.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Runs that learn</h3>
+              <p>
+                A retrospective turns the mistakes of each run into better instructions, citing the
+                evidence, approved by you.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Isolation on demand</h3>
+              <p>
+                With <code>--executor lima</code>, agents, git and the verifier run in a dedicated
+                VM that only sees your workspace.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section band">
+        <div class="wrap split">
+          <div>
+            <p class="eyebrow">Quick start</p>
+            <h2>From spec to merged code</h2>
+            <p>
+              You need Node.js 22+, git and
+              <a href="https://claude.com/claude-code">Claude Code</a> logged in. Themis is not on
+              npm yet; install it from a clone:
+            </p>
+            <p><code>npm install &amp;&amp; npm run build &amp;&amp; npm link</code></p>
+            <p>
+              The
+              <a href="https://github.com/AlbertoBarrago/themis/wiki/CLI-Reference">CLI reference</a>
+              lists every command and option.
+            </p>
+          </div>
+          <figure class="window">
+            <div class="window-bar">
+              <span></span><span></span><span></span>
+              <p>terminal</p>
+            </div>
+            <pre><code><span class="dim">$</span> themis check
+<span class="dim">$</span> themis init
+<span class="dim">$</span> themis plan  <span class="dim">&amp;&amp;</span> themis approve plan
+<span class="dim">$</span> themis tests <span class="dim">&amp;&amp;</span> themis approve tests
+<span class="dim">$</span> themis run
 <span class="dim">$</span> themis status
-<span class="dim">$</span> themis retro &amp;&amp; themis approve retro</code></pre>
+<span class="dim">$</span> themis retro <span class="dim">&amp;&amp;</span> themis approve retro</code></pre>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section inspiration">
+        <div class="wrap narrow">
+          <p class="eyebrow">Inspiration</p>
+          <blockquote>
+            <p class="quote">
+              &ldquo;A final tip: probably the most important thing to get great results out of
+              Claude Code -- give Claude a way to verify its work. If Claude has that feedback loop,
+              it will 2-3x the quality of the final result.&rdquo;
+            </p>
+            <footer>
+              <strong>Boris Cherny</strong>, creator of Claude Code &middot;
+              <a href="https://x.com/bcherny/status/2007179861115511237">January 2026</a>
+            </footer>
+          </blockquote>
+          <p class="closing">
+            Themis takes that idea to its conclusion: make the verifier the only judge, lock what it
+            verifies, and turn the mistakes of every run into better instructions for the next one.
+            <a href="https://github.com/AlbertoBarrago/themis/wiki/Inspiration"
+              >More in the wiki &rarr;</a
+            >
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bottom">
+      <div class="wrap foot">
+        <a class="brand small" href="./">
+          <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#scales" /></svg>
+          Themis
+        </a>
+        <ul>
+          <li><a href="https://github.com/AlbertoBarrago/themis">GitHub</a></li>
+          <li><a href="https://github.com/AlbertoBarrago/themis/wiki">Wiki</a></li>
+          <li>
+            <a href="https://github.com/AlbertoBarrago/themis/blob/main/SPEC_FORMAT.md"
+              >Spec format</a
+            >
+          </li>
+        </ul>
+        <p class="copyright">
+          Early development &middot; MIT licensed &middot; &copy; 2026 Alberto Barrago &middot; Not
+          affiliated with Anthropic
+        </p>
       </div>
-    </section>
-
-    <section class="wrap inspiration">
-      <h2>Inspiration</h2>
-      <blockquote>
-        <p>&ldquo;A final tip: probably the most important thing to get great results out of
-          Claude Code -- give Claude a way to verify its work. If Claude has that feedback loop, it will 2-3x the
-          quality of the final result.&rdquo;</p>
-        <footer>
-          Boris Cherny, creator of Claude Code,
-          <a href="https://x.com/bcherny/status/2007179861115511237">January 2026</a>
-        </footer>
-      </blockquote>
-      <p class="closing">
-        Themis takes that idea to its conclusion: make the verifier the only judge, lock what it
-        verifies, and turn the mistakes of every run into better instructions for the next one.
-        <a href="https://github.com/AlbertoBarrago/themis/wiki/Inspiration">More in the wiki</a>.
-      </p>
-    </section>
-  </main>
-
-  <footer class="bottom">
-    <div class="wrap foot">
-      <p class="copyright">Themis is in early development. MIT licensed. &copy; 2026 Alberto Barrago.</p>
-      <ul>
-        <li><a href="https://github.com/AlbertoBarrago/themis">GitHub</a></li>
-        <li><a href="https://github.com/AlbertoBarrago/themis/wiki">Wiki</a></li>
-        <li><a href="https://github.com/AlbertoBarrago/themis/blob/main/SPEC_FORMAT.md">Spec format</a></li>
-      </ul>
-    </div>
-  </footer>
-</body>
+    </footer>
+  </body>
 </html>
