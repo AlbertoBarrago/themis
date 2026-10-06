@@ -23,7 +23,7 @@ orchestrator. M1 needs to run `npm install` and to install agent-side write prot
     prefix anchors the path to the settings file's project root, and `Edit` covers every
     built-in file-editing tool (Write, MultiEdit, NotebookEdit). Source:
     https://code.claude.com/docs/en/permissions.md
-  - `AgentRunner` (M4): runs one agent invocation through an `Executor`, so a sandboxed
+  - `AgentRunner` (brought forward to M2, see ADR 0009): runs one agent invocation through an `Executor`, so a sandboxed
     executor also sandboxes the agent.
 - Adapters are looked up by name (`--agent claude-code`, the default) in one registry; no other
   module imports `src/adapters/claude-code`.
@@ -32,8 +32,8 @@ orchestrator. M1 needs to run `npm install` and to install agent-side write prot
 
 - Per the Claude Code docs, project `.claude/settings.json` deny rules are not applied by
   `claude -p` in a workspace that has not been trusted. The M4 `AgentRunner` must therefore
-  pass the same rules explicitly on every invocation (`--settings` or `--disallowedTools`,
-  to be confirmed with a test call), and not rely on the project file alone.
+  pass the same rules explicitly on every invocation, and not rely on the project file alone.
+  Confirmed by test calls in ADR 0009 (inline `--settings` with `./`-prefixed rules).
 
 - Agent-side protections are defense in depth only: an agent can still write files through a
   shell. The guard step of the verifier (ADR 0007) is the actual enforcement.

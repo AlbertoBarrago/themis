@@ -1,4 +1,7 @@
+import type { Executor } from "../runtime/executor.js";
+import type { AgentRunner } from "./agent-runner.js";
 import { ClaudeCodeGuardInstaller } from "./claude-code/guards.js";
+import { ClaudeCodeRunner } from "./claude-code/runner.js";
 import type { GuardInstaller } from "./guard-installer.js";
 
 /**
@@ -18,4 +21,13 @@ export function availableAgents(): string[] {
 /** Returns `undefined` for an unknown agent name; callers report it as a usage error. */
 export function guardInstallerFor(agent: string): GuardInstaller | undefined {
   return GUARD_INSTALLERS[agent]?.();
+}
+
+const RUNNERS: Record<string, (executor: Executor) => AgentRunner> = {
+  "claude-code": (executor) => new ClaudeCodeRunner({ executor }),
+};
+
+/** Returns `undefined` for an unknown agent name; callers report it as a usage error. */
+export function runnerFor(agent: string, executor: Executor): AgentRunner | undefined {
+  return RUNNERS[agent]?.(executor);
 }
