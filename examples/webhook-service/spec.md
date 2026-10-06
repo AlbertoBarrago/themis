@@ -17,7 +17,10 @@ durably and forwards them to an internal consumer with retries and a dead-letter
   Database driver: `pg`. No ORM.
 - Storage: PostgreSQL 16, defined in `docker-compose.yml` as service `postgres`. The host
   port comes from `POSTGRES_PORT` (default `5432`) and the compose project name from
-  `COMPOSE_PROJECT_NAME`, so several copies can run side by side.
+  `COMPOSE_PROJECT_NAME`, so several copies can run side by side. Credentials come from
+  `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DB`, each defaulting to `themis`. When
+  `DATABASE_URL` is not set, it defaults to
+  `postgres://<user>:<password>@localhost:<port>/<db>` built from those variables.
 - Migrations: plain SQL files in `migrations/`, applied in lexical order by
   `npm run migrate`. Applying them twice is a no-op. The connection string comes from
   `DATABASE_URL`. Migrations use unqualified table names, so they apply to whatever schema

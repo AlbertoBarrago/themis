@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-(Formerly "Ordito"; renamed to Themis, see ADR 0012. The npm package is provisionally
+(Formerly "Ordito"; renamed to Themis, see ADR 0012. The npm package is
 `themis-spec`, the binary is `themis`.)
 
 Themis is an open format (`SPEC_FORMAT.md`, version `0.1`) plus a reference CLI (npm package

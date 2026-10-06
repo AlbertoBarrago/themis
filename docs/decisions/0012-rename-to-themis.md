@@ -16,8 +16,8 @@ to be already in use elsewhere.
   (nothing has been released): the CLI binary `themis`, the project directory `.themis/`, the
   frontmatter key `themis: 0.1`, the `version` field of Themis files, environment variables
   `THEMIS_*`, template placeholders `__THEMIS_<KEY>__`.
-- The npm name `themis` is taken; the package is provisionally `themis-spec`, with the binary
-  still called `themis`. To be confirmed before the first publish.
+- The npm name `themis` is taken; the package is `themis-spec` (confirmed), with the binary
+  still called `themis`.
 - ADRs written before the rename were updated in place to the new names, so the codebase and
   its records agree.
 
@@ -25,4 +25,5 @@ to be already in use elsewhere.
 
 - Projects initialised with an earlier build must be re-initialised (`themis init`) and their
   spec frontmatter changed from `ordito:` to `themis:`.
-- The GitHub repository and the local folder still carry the old name until renamed by hand.
+- The GitHub repository was renamed to `AlbertoBarrago/themis`. The local folder keeps the old
+  name until renamed by hand.
