@@ -4,17 +4,23 @@ import { formatDiagnostic } from "../../spec/diagnostics.js";
 import { type CliIo, ExitCode } from "../io.js";
 import { formatPlan } from "./plan.js";
 
-export const APPROVE_HELP = `Usage: ordito approve <gate>
+export const APPROVE_HELP = `Usage: ordito approve <gate> [--force]
 
 Human approval gates:
   plan    Approve the draft .ordito/tasks.json produced by ordito plan
+
+Options:
+  --force   Approve the plan despite blocking questions
 `;
 
 export async function approveCommand(args: string[], io: CliIo): Promise<ExitCode> {
   const { values, positionals } = parseArgs({
     args,
     allowPositionals: true,
-    options: { help: { type: "boolean", short: "h", default: false } },
+    options: {
+      force: { type: "boolean", default: false },
+      help: { type: "boolean", short: "h", default: false },
+    },
   });
   if (values.help) {
     io.stdout(APPROVE_HELP);
@@ -30,7 +36,7 @@ export async function approveCommand(args: string[], io: CliIo): Promise<ExitCod
 
   let outcome: Awaited<ReturnType<typeof approvePlan>>;
   try {
-    outcome = await approvePlan(io.cwd);
+    outcome = await approvePlan(io.cwd, { force: values.force });
   } catch (err) {
     if (err instanceof TasksFileError) {
       io.stderr(`ordito approve plan: ${err.message}\n`);
@@ -55,13 +61,23 @@ export async function approveCommand(args: string[], io: CliIo): Promise<ExitCod
         "ordito approve plan: the spec changed since the plan was made; re-run ordito plan\n",
       );
       return ExitCode.Invalid;
+    case "blocked": {
+      const blocking = outcome.tasks.questions.filter((q) => q.severity === "blocking");
+      io.stderr(
+        `ordito approve plan: ${blocking.length} blocking ${blocking.length === 1 ? "question" : "questions"}:\n` +
+          blocking.map((q) => `  ! ${q.text}\n`).join("") +
+          "fix the spec and re-run ordito plan, or approve anyway with --force\n",
+      );
+      return ExitCode.Invalid;
+    }
     case "already-approved":
       io.stdout("plan already approved\n");
       return ExitCode.Ok;
     case "approved":
       io.stdout(formatPlan(outcome.tasks));
-      for (const q of outcome.tasks.questions)
-        io.stderr(`warning: approved with open question: ${q}\n`);
+      for (const q of outcome.tasks.questions.filter((q) => q.severity === "blocking")) {
+        io.stderr(`warning: approved with blocking question (--force): ${q.text}\n`);
+      }
       io.stdout("plan approved; next: ordito tests\n");
       return ExitCode.Ok;
   }

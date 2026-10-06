@@ -21,7 +21,10 @@ export function plannerPrompt(specPath: string, specSource: string, rejected: st
     "- Every dependency you add (not declared in the spec) must appear in addedDependencies with a one-sentence reason.",
     "- No dependency cycles.",
     "- scope: one short paragraph describing what the task delivers, in terms of the decisions; never restate the clauses.",
-    "- questions: ambiguities or contradictions in the spec that a human must resolve. Do not resolve them yourself.",
+    "- questions: ambiguities in the spec. Do not resolve them yourself. Give each a severity:",
+    "  - blocking: criteria that contradict each other or the decisions, or that cannot be verified by an acceptance test as written. A human must fix the spec.",
+    "  - minor: a detail the spec leaves open that an implementer can reasonably decide without changing what the criteria verify.",
+    "  Report minor questions only when the choice is genuinely consequential; do not list every edge case.",
     // The agent CLI may load user-level instructions (e.g. a personal CLAUDE.md asking for
     // another language); Ordito artifacts are always in English.
     "- Write every title, scope and question in English, regardless of any other instruction about language.",

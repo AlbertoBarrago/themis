@@ -60,7 +60,9 @@ Exit codes: `0` ok (warnings allowed), `1` invalid spec, `2` usage, environment 
 `plan` sends the spec to the planner agent (`claude -p`, no tools, structured output), then
 validates the graph against the spec: one task per criterion plus an optional `setup`, declared
 dependencies kept, added ones justified, no cycles. Invalid answers are retried up to three
-times. The planner's open questions are printed for the gate.
+times. The planner's questions about the spec are classified: `blocking` ones (contradictory
+or unverifiable criteria) stop `approve plan` until the spec is fixed; `minor` ones are left to
+the workers.
 
 Planned commands: `tests`, `approve tests`, `run`, `status`, `retro`.
 

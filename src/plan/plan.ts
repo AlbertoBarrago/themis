@@ -196,14 +196,26 @@ export type ApproveOutcome =
   | { kind: "spec-unreadable"; message: string }
   | { kind: "invalid-spec"; diagnostics: Diagnostic[] }
   | { kind: "spec-changed" }
+  | { kind: "blocked"; tasks: TasksFile }
   | { kind: "already-approved"; tasks: TasksFile }
   | { kind: "approved"; tasks: TasksFile };
 
-/** `ordito approve plan`: the human gate. Refuses a plan made for a different spec. */
+export interface ApproveOptions {
+  /** Approve despite blocking questions. */
+  force?: boolean;
+  now?: () => Date;
+}
+
+/**
+ * `ordito approve plan`: the human gate. Refuses a plan made for a different spec, and one
+ * with blocking questions unless forced: those mean the criteria cannot be turned into a
+ * coherent contract as written.
+ */
 export async function approvePlan(
   root: string,
-  now: () => Date = () => new Date(),
+  options: ApproveOptions = {},
 ): Promise<ApproveOutcome> {
+  const now = options.now ?? (() => new Date());
   const tasks = await readTasks(root);
   if (tasks === undefined) return { kind: "no-plan" };
   if (tasks.status === "approved") return { kind: "already-approved", tasks };
@@ -211,6 +223,9 @@ export async function approvePlan(
   const loaded = await loadSpec(root, tasks.spec);
   if (!loaded.ok) return loaded.outcome;
   if (loaded.digest !== tasks.specDigest) return { kind: "spec-changed" };
+  if (!options.force && tasks.questions.some((q) => q.severity === "blocking")) {
+    return { kind: "blocked", tasks };
+  }
 
   const approved: TasksFile = { ...tasks, status: "approved", approvedAt: now().toISOString() };
   await writeTasks(root, approved);

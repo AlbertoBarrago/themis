@@ -34,7 +34,14 @@ const GOOD = {
     },
     { id: "AC-1", title: "A", scope: "Does A.", dependsOn: [], addedDependencies: [] },
   ],
-  questions: ["Is A idempotent?"],
+  questions: [{ text: "Is A idempotent?", severity: "minor" }],
+};
+const BLOCKED = {
+  ...GOOD,
+  questions: [
+    { text: "AC-1 contradicts the decisions.", severity: "blocking" },
+    { text: "Is A idempotent?", severity: "minor" },
+  ],
 };
 const BAD = {
   tasks: [{ id: "AC-1", title: "A", scope: "x", dependsOn: [], addedDependencies: [] }],
@@ -83,6 +90,7 @@ describe("plan", () => {
     expect(call?.prompt).toContain(
       "in English, regardless of any other instruction about language",
     );
+    expect(call?.prompt).toContain("- blocking: criteria that contradict each other");
     expect(call?.protectedPaths).toContain("tests/acceptance/**");
     expect(call?.outputSchema).toMatchObject({ type: "object", required: ["tasks", "questions"] });
   });
@@ -99,7 +107,7 @@ describe("plan", () => {
       status: "draft",
       createdAt: "2026-10-06T10:00:00.000Z",
       approvedAt: null,
-      questions: ["Is A idempotent?"],
+      questions: [{ text: "Is A idempotent?", severity: "minor" }],
     });
     expect(tasks.specDigest).toMatch(/^[0-9a-f]{64}$/);
     expect(tasks.tasks.map((t: { id: string }) => t.id)).toEqual(["AC-1", "AC-2"]);
@@ -212,7 +220,7 @@ describe("approve plan", () => {
       runner: new FakeAgentRunner([structured(GOOD)]),
     });
     const now = () => new Date("2026-10-06T11:00:00.000Z");
-    expect((await approvePlan(root, now)).kind).toBe("approved");
+    expect((await approvePlan(root, { now })).kind).toBe("approved");
     expect(await tasksJson()).toMatchObject({
       status: "approved",
       approvedAt: "2026-10-06T11:00:00.000Z",
@@ -230,6 +238,34 @@ describe("approve plan", () => {
     await writeFile(join(root, "spec.md"), `${SPEC}\n- Then more`);
     expect((await approvePlan(root)).kind).toBe("spec-changed");
     expect((await tasksJson()).status).toBe("draft");
+  });
+
+  it("refuses blocking questions unless forced", async () => {
+    await plan({
+      root,
+      specPath: "spec.md",
+      force: false,
+      runner: new FakeAgentRunner([structured(BLOCKED)]),
+    });
+    expect((await approvePlan(root)).kind).toBe("blocked");
+    expect((await tasksJson()).status).toBe("draft");
+    expect((await approvePlan(root, { force: true })).kind).toBe("approved");
+  });
+
+  it("reads questions stored as bare strings as blocking", async () => {
+    await plan({
+      root,
+      specPath: "spec.md",
+      force: false,
+      runner: new FakeAgentRunner([structured(GOOD)]),
+    });
+    const legacy = { ...(await tasksJson()), questions: ["Old question?"] };
+    await writeFile(join(root, ".ordito/tasks.json"), JSON.stringify(legacy));
+    const outcome = await approvePlan(root);
+    expect(outcome.kind).toBe("blocked");
+    if (outcome.kind === "blocked") {
+      expect(outcome.tasks.questions).toEqual([{ text: "Old question?", severity: "blocking" }]);
+    }
   });
 
   it("refuses without a plan", async () => {
@@ -262,15 +298,38 @@ describe("CLI through the real Claude Code runner", () => {
     expect(out).toContain(
       "  2. AC-2  B  [after AC-1]\n       Does B.\n       + depends on AC-1: B builds on A",
     );
-    expect(out).toContain("? Is A idempotent?");
+    expect(out).toContain(
+      "Minor questions (left to the workers, who decide and record the choice):\n  ? Is A idempotent?",
+    );
+    expect(out).not.toContain("Blocking questions");
+    expect(out).toContain("then run: ordito approve plan");
     expect(out).toContain("planner: 1 attempt, 4.2s, $0.1234");
 
     out = "";
     expect(await approveCommand(["plan"], io())).toBe(0);
     expect(out).toContain("(2 tasks, approved)");
-    expect(err).toContain("warning: approved with open question: Is A idempotent?");
+    expect(err).toBe("planning...\n");
     expect(await approveCommand(["plan"], io())).toBe(0);
     expect(out).toContain("plan already approved");
+  });
+
+  it("blocks the gate on blocking questions until forced", async () => {
+    expect(await planCommand([], io(), claude(BLOCKED))).toBe(0);
+    expect(out).toContain(
+      "Blocking questions (fix the spec and re-run ordito plan):\n  ! AC-1 contradicts the decisions.",
+    );
+    expect(out).toContain("resolve the blocking questions in the spec, then re-run ordito plan");
+
+    err = "";
+    expect(await approveCommand(["plan"], io())).toBe(1);
+    expect(err).toContain("1 blocking question:\n  ! AC-1 contradicts the decisions.");
+    expect(err).toContain("or approve anyway with --force");
+
+    err = "";
+    expect(await approveCommand(["plan", "--force"], io())).toBe(0);
+    expect(err).toBe(
+      "warning: approved with blocking question (--force): AC-1 contradicts the decisions.\n",
+    );
   });
 
   it("exits 1 for a plan that never validates", async () => {

@@ -16,10 +16,23 @@ const plannedTask = z.strictObject({
   addedDependencies: z.array(addedDependency),
 });
 
+/**
+ * `blocking`: the criteria are contradictory or cannot be verified as written; the plan gate
+ * refuses until it is resolved. `minor`: an implementation detail a worker can decide and
+ * record. See ADR 0010.
+ */
+export const QUESTION_SEVERITIES = ["blocking", "minor"] as const;
+
+const question = z.strictObject({
+  text: z.string().min(1),
+  severity: z.enum(QUESTION_SEVERITIES),
+});
+export type Question = z.infer<typeof question>;
+
 /** What the planner agent must return. Its JSON Schema is sent with the call. */
 export const plannerOutput = z.strictObject({
   tasks: z.array(plannedTask).min(1),
-  questions: z.array(z.string()),
+  questions: z.array(question),
 });
 export type PlannerOutput = z.infer<typeof plannerOutput>;
 export type PlannedTask = z.infer<typeof plannedTask>;
@@ -43,8 +56,12 @@ export const tasksFile = z.strictObject({
   createdAt: z.string(),
   approvedAt: z.string().nullable(),
   tasks: z.array(plannedTask),
-  questions: z.array(z.string()),
+  // Plans written before severities existed stored bare strings; they are read as blocking,
+  // the conservative choice, so an old draft cannot slip through the gate unreviewed.
+  questions: z.array(
+    z.union([question, z.string().transform((text): Question => ({ text, severity: "blocking" }))]),
+  ),
 });
-export type TasksFile = z.infer<typeof tasksFile>;
+export type TasksFile = z.output<typeof tasksFile>;
 
 export const TASKS_PATH = ".ordito/tasks.json";

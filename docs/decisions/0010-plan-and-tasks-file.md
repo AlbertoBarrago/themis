@@ -11,7 +11,8 @@ Status: accepted (2026-10-06)
 - One planner call, model tier `models.planner`, **no tools**: the whole spec is in the prompt,
   and the output is constrained with a JSON schema generated from the zod schema
   (`z.toJSONSchema`, no extra dependency):
-  `{ tasks: [{ id, title, scope, dependsOn, addedDependencies: [{ id, reason }] }], questions: [] }`.
+  `{ tasks: [{ id, title, scope, dependsOn, addedDependencies: [{ id, reason }] }],
+  questions: [{ text, severity }] }`.
 - Ordito then validates the plan deterministically against the spec:
   - exactly one task per criterion, plus at most one task with id `setup`, nothing else;
   - every dependency declared with `Depends:` is kept;
@@ -37,7 +38,7 @@ Status: accepted (2026-10-06)
     { "id": "AC-1", "title": "...", "scope": "...", "dependsOn": ["setup"],
       "addedDependencies": [{ "id": "setup", "reason": "..." }] }
   ],
-  "questions": []
+  "questions": [{ "text": "...", "severity": "minor" }]
 }
 ```
 
@@ -50,8 +51,17 @@ dependencies, added dependencies with reasons, open questions) for the human gat
   approval).
 - `ordito approve plan` requires a draft whose `specDigest` matches the current spec (else
   exit `1`: "spec changed, re-run ordito plan"), sets `status: "approved"` and `approvedAt`.
-  Open questions are printed as warnings but do not block: answering them is the human's call.
   Approving an approved plan is a no-op.
+- Questions carry a severity (amended 2026-10-06, after real planner runs showed that
+  questions never reach zero: each round finds finer edge cases):
+  - `blocking`: criteria that contradict each other or the decisions, or cannot be verified
+    by an acceptance test as written. `approve plan` refuses (exit `1`) until the spec is
+    fixed and the plan redone, unless `--force`.
+  - `minor`: a detail an implementer can decide without changing what the criteria verify.
+    Shown compactly, never blocks. From M4, workers receive them with the instruction to
+    decide and record the choice, and the retrospective collects those choices.
+- Stored as `{ "text": "...", "severity": "blocking" | "minor" }`. Bare strings from earlier
+  drafts are read as `blocking`.
 
 ### Run log
 

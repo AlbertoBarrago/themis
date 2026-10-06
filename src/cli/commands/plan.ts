@@ -94,7 +94,11 @@ export async function planCommand(
     case "done":
       io.stdout(formatPlan(outcome.tasks));
       io.stdout(formatTotals(outcome.totals));
-      io.stdout("draft written to .ordito/tasks.json; review it, then run: ordito approve plan\n");
+      io.stdout(
+        outcome.tasks.questions.some((q) => q.severity === "blocking")
+          ? "draft written to .ordito/tasks.json; resolve the blocking questions in the spec, then re-run ordito plan\n"
+          : "draft written to .ordito/tasks.json; review it, then run: ordito approve plan\n",
+      );
       return ExitCode.Ok;
   }
 }
@@ -111,9 +115,15 @@ export function formatPlan(tasks: TasksFile): string {
       lines.push(`       + depends on ${added.id}: ${added.reason}`);
     }
   });
-  if (tasks.questions.length > 0) {
-    lines.push("", "Open questions (resolve them in the spec before approving, or approve as is):");
-    for (const q of tasks.questions) lines.push(`  ? ${q}`);
+  const blocking = tasks.questions.filter((q) => q.severity === "blocking");
+  const minor = tasks.questions.filter((q) => q.severity === "minor");
+  if (blocking.length > 0) {
+    lines.push("", "Blocking questions (fix the spec and re-run ordito plan):");
+    for (const q of blocking) lines.push(`  ! ${q.text}`);
+  }
+  if (minor.length > 0) {
+    lines.push("", "Minor questions (left to the workers, who decide and record the choice):");
+    for (const q of minor) lines.push(`  ? ${q.text}`);
   }
   return `${lines.join("\n")}\n\n`;
 }
