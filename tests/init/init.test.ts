@@ -80,6 +80,7 @@ describe("ordito init in an empty directory", () => {
       ".ordito/verify.sh",
       ".ordito/guard.mjs",
       ".ordito/agents/planner.md",
+      ".ordito/agents/test-author.md",
       ".ordito/agents/worker.md",
       ".ordito/agents/reviewer.md",
       ".ordito/agents/retro.md",

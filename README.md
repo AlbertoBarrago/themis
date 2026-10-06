@@ -12,7 +12,7 @@ The point is not generating a plan. It is **guaranteeing convergence**: an immut
 contract, one verifier with semantic exit codes, guards against shortcuts, and a
 retrospective loop that improves the agent configuration over time.
 
-> Status: early development (milestone M2). The format is at version `0.1`.
+> Status: early development (milestone M3). The format is at version `0.1`.
 
 ## The format
 
@@ -45,6 +45,8 @@ ordito check [spec.md] [--json]   # validate a spec, every error with line, colu
 ordito init [--spec <path>] [--force] [--skip-install]
 ordito plan [--spec <path>] [--force]   # planner agent -> draft .ordito/tasks.json
 ordito approve plan                     # human gate
+ordito tests [--force]                  # test author -> tests/acceptance/ (draft)
+ordito approve tests [--force]          # human gate: lock the contract
 ```
 
 `init` scaffolds a node-ts project if the folder has no `package.json` (an existing project is
@@ -64,7 +66,12 @@ times. The planner's questions about the spec are classified: `blocking` ones (c
 or unverifiable criteria) stop `approve plan` until the spec is fixed; `minor` ones are left to
 the workers.
 
-Planned commands: `tests`, `approve tests`, `run`, `status`, `retro`.
+`tests` asks the test author for acceptance tests; Ordito checks paths, coverage (a
+`describe("AC-<n>: ...")` per criterion) and forbidden markers before writing them.
+`approve tests` re-checks the files on disk and records their digests, with the spec, verifier
+and tool configuration, in `.ordito/lock.json`: from then on the guard rejects any change.
+
+Planned commands: `run`, `status`, `retro`.
 
 ## Development
 

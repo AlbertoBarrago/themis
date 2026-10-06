@@ -3,6 +3,7 @@ import { approveCommand } from "./commands/approve.js";
 import { check } from "./commands/check.js";
 import { initCommand } from "./commands/init.js";
 import { planCommand } from "./commands/plan.js";
+import { testsCommand } from "./commands/tests.js";
 import { type CliIo, ExitCode } from "./io.js";
 
 const HELP = `Usage: ordito <command> [options]
@@ -12,6 +13,8 @@ Commands:
   init           Prepare the project: verifier, guard, agent roles, protections
   plan           Ask the planner for a task graph (draft .ordito/tasks.json)
   approve plan   Approve the draft plan (human gate)
+  tests          Ask the test author for acceptance tests (draft tests/acceptance/)
+  approve tests  Approve the tests and lock the contract (human gate)
 
 Options:
   -h, --help     Show help
@@ -24,7 +27,8 @@ const COMMANDS: Record<string, Command> = {
   check,
   init: (args, io) => initCommand(args, io),
   plan: (args, io) => planCommand(args, io),
-  approve: approveCommand,
+  tests: (args, io) => testsCommand(args, io),
+  approve: (args, io) => approveCommand(args, io),
 };
 
 /** Dispatches a command line (without the node and script arguments) and returns the exit code. */

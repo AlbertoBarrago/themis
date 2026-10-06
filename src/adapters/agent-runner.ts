@@ -6,8 +6,11 @@ import type { AgentRole, ModelTier } from "../spec/types.js";
  */
 export type ToolAccess = "none" | "read-only";
 
+/** Spec roles (which have a model tier in the frontmatter) plus internal roles. */
+export type InvocationRole = AgentRole | "test-author";
+
 export interface AgentInvocation {
-  role: AgentRole;
+  role: InvocationRole;
   tier: ModelTier;
   /** Project (or worktree) root the agent works in. */
   cwd: string;
