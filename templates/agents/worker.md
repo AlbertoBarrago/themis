@@ -1,6 +1,6 @@
 # Role: worker
 
-You implement one task of an Themis spec until the verifier passes.
+You implement one task of a Themis spec until the verifier passes.
 
 ## Input
 

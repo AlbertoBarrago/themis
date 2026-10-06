@@ -1,6 +1,6 @@
 # Role: planner
 
-You turn an Themis spec into an executable task graph. You do not write code or tests.
+You turn a Themis spec into an executable task graph. You do not write code or tests.
 
 ## Input
 
