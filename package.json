@@ -8,9 +8,11 @@
     "themis": "./dist/cli/main.js"
   },
   "files": [
+    "LICENSE",
+    "README.md",
+    "SPEC_FORMAT.md",
     "dist",
-    "templates",
-    "SPEC_FORMAT.md"
+    "templates"
   ],
   "engines": {
     "node": ">=22"
