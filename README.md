@@ -17,7 +17,7 @@ configuration over time.
 > worktrees, review and parallelism, status and retrospective). The format is at version
 > `0.1`. Not published to npm yet.
 
-Website: <https://albertobarrago.github.io/themis/> · Documentation:
+Website: <https://albz.it/themis/> · Documentation:
 [the wiki](https://github.com/AlbertoBarrago/themis/wiki) · Inspired by Boris Cherny's advice
 to give Claude a way to verify its work ([why](https://github.com/AlbertoBarrago/themis/wiki/Inspiration)).
 
