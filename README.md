@@ -88,6 +88,12 @@ npm link            # puts `themis` on your PATH
 
 ## Quick start
 
+New to Themis? The [Getting Started](https://github.com/AlbertoBarrago/themis/wiki/Getting-Started)
+walkthrough runs a ready-made spec ([`examples/getting-started`](examples/getting-started/spec.md))
+through the whole loop. Then tell us how it went with a
+[run report](https://github.com/AlbertoBarrago/themis/issues/new?template=run-report.yml);
+questions go to [Discussions](https://github.com/AlbertoBarrago/themis/discussions).
+
 ```sh
 mkdir greeter && cd greeter && git init -b main
 $EDITOR spec.md                   # see "The format" below

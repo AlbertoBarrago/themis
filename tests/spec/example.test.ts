@@ -22,3 +22,20 @@ describe("examples/webhook-service/spec.md", () => {
     expect(spec?.context.map((s) => s.heading)).toEqual(["Test harness"]);
   });
 });
+
+describe("examples/getting-started/spec.md", () => {
+  it("is valid with no warnings, and AC-2 and AC-3 can run in parallel after AC-1", async () => {
+    const source = await readFile(
+      new URL("../../examples/getting-started/spec.md", import.meta.url),
+      "utf8",
+    );
+    const { spec, diagnostics } = parseSpec(source);
+    expect(diagnostics).toEqual([]);
+    expect(spec?.criteria.map((c) => [c.id, c.depends])).toEqual([
+      ["AC-1", []],
+      ["AC-2", ["AC-1"]],
+      ["AC-3", ["AC-1"]],
+    ]);
+    expect(spec?.frontmatter.limits).toEqual({ max_iterations: 3, parallel: 2 });
+  });
+});
