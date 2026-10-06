@@ -69,9 +69,10 @@ npm run build && node dist/cli/main.js check examples/webhook-service/spec.md
   protections such as `.claude/settings.json` are installed by the adapter, not by core code.
 - `ClaudeCodeRunner` (`src/adapters/claude-code/runner.ts`) passes protections on every call as
   inline `--settings` with `./`-prefixed rules: inline `Edit(/x)` is NOT enforced (ADR 0009).
-  `claude -p` also loads the user's global CLAUDE.md, so prompts must state anything that must
-  not be overridden (e.g. output language). JSON Schemas sent with `--json-schema` must not
-  carry a `$schema` key.
+  Agents run with `--setting-sources project,local`, so the user's global CLAUDE.md does not
+  reach them (ADR 0013), but the target repo's CLAUDE.md does: prompts must still state
+  anything that must not be overridden (e.g. output language). JSON Schemas sent with
+  `--json-schema` must not carry a `$schema` key.
 - `themis run` (`src/run/run.ts`, ADR 0014): scheduler plus per-task state machine
   (worker, verify, review, merge, post-merge verify with self-undo). Git goes through
   `src/git/git.ts` and the executor; main-tree operations are serialised by `#withMain`, state
