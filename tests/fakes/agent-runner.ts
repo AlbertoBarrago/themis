@@ -5,7 +5,7 @@ import {
   NO_USAGE,
 } from "../../src/adapters/agent-runner.js";
 
-type Reply = AgentResult | ((invocation: AgentInvocation) => AgentResult);
+type Reply = AgentResult | ((invocation: AgentInvocation) => AgentResult | Promise<AgentResult>);
 
 /** Replays scripted results in order and records every invocation. */
 export class FakeAgentRunner implements AgentRunner {

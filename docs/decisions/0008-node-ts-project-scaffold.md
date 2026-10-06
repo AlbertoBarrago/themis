@@ -30,3 +30,8 @@ when none exists. Existing projects must not be rewritten.
 
 - Support for existing projects is limited to ones already shaped like the scaffold.
 - Dependency versions in the scaffold must be bumped together with Themis's own.
+- Amended in M5 (2026-10-06): the scaffolded `biome.json` excludes `tests/acceptance/` from
+  linting and formatting. Those files are locked, so a lint finding in them can never be fixed
+  by a worker: the first real M5 run spent all four iterations on a Biome rule
+  (`noControlCharactersInRegex`) violated by a locked test. Their quality is the human's call
+  at the gate; type checking still covers them.

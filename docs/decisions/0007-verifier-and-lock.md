@@ -31,7 +31,7 @@ Both are part of the locked contract.
 | unit        | `vitest run --exclude 'tests/acceptance/**' --passWithNoTests --retry=0`    | binary missing                                 | non-zero exit                     |
 | infra       | `docker compose config -q`, then `docker compose up -d --wait`              | `docker info` fails, `up` fails                | no compose file, invalid compose file |
 | migrate     | `npm run migrate`                                                           |                                                | script missing, non-zero exit     |
-| acceptance  | `vitest run tests/acceptance --retry=0 [-t '^AC-<n>:']`                     | lock missing ("contract not locked")           | non-zero exit                     |
+| acceptance  | `vitest run tests/acceptance --retry=0 [-t '^(AC-<n>\|...):']`              | lock missing ("contract not locked")           | non-zero exit                     |
 
 Compose file and migrations are written by agents (the planner's `setup` task), so their
 absence or a failing migration is a code problem (`1`). This matches `SPEC_FORMAT.md` 6.3,
@@ -64,6 +64,12 @@ ANSI sequences stripped. On success `.verify.log` is removed.
   "files": { "tests/acceptance/ac-1.test.ts": "<sha256 hex>", "spec.md": "<sha256 hex>" }
 }
 ```
+
+Amended in M5 (2026-10-06): the verifier takes any number of criterion ids and runs acceptance
+for exactly those (the task plus the tasks already done); without ids it runs all criteria.
+The original design ran the full suite after the task's own criterion, which made a worker
+that correctly stayed in scope fail on criteria owned by tasks not run yet (first real M5 run:
+AC-1 passed its 6 tests and failed on AC-3's).
 
 ## Consequences
 

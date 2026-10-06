@@ -206,7 +206,10 @@ runner configuration).
 ## 6. Verification contract
 
 A single verifier is the only judge of whether the implementation satisfies the spec. It
-takes an optional criterion identifier as argument.
+takes optional criterion identifiers as arguments: the criterion under work plus the criteria
+already done. A criterion that is not implemented yet must never make another one fail. The
+single argument `none` selects no criterion (for a task that owns none, such as a setup task,
+when no criterion is done yet).
 
 ### 6.1 Steps
 
@@ -218,8 +221,7 @@ Steps run in order of increasing cost and stop at the first failure:
 4. `unit`
 5. `infra`
 6. `migrate`
-7. `acceptance` for the given criterion, if one was given
-8. `acceptance` for all criteria (regression)
+7. `acceptance` for the given criteria, or for all criteria when none is given
 
 Steps not enabled in `verify` are skipped.
 

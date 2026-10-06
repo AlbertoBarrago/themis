@@ -1,8 +1,9 @@
 import { parseArgs } from "node:util";
 import { TestsFileError } from "../../acceptance/acceptance.js";
 import { availableAgents, DEFAULT_AGENT, runnerFor } from "../../adapters/registry.js";
+import { GitError } from "../../git/git.js";
 import { TasksFileError } from "../../plan/plan.js";
-import { type RunEvent, runTask } from "../../run/run.js";
+import { type RunEvent, run } from "../../run/run.js";
 import { StateFileError } from "../../run/state.js";
 import type { Executor } from "../../runtime/executor.js";
 import { LocalExecutor } from "../../runtime/local-executor.js";
@@ -12,9 +13,12 @@ import { type CliIo, ExitCode } from "../io.js";
 
 export const RUN_HELP = `Usage: themis run [task] [--executor local|lima] [--agent <name>] [--spec <path>]
 
-Runs one task until the verifier passes: the worker agent edits the code, then Themis runs
-.themis/verify.sh itself. Without a task id, runs the first task whose dependencies are done.
-State is saved after every step: interrupt with Ctrl-C and run again to resume.
+Runs the task graph: each task works in its own git worktree, up to limits.parallel at once.
+A worker edits the code, Themis runs .themis/verify.sh itself, a reviewer reads the diff, and
+Themis merges into the current branch and verifies it again. With a task id, runs that task
+only. State is saved after every step: interrupt with Ctrl-C and run again to resume.
+
+Exit codes: 0 every task done, 1 a task failed, 2 a task is blocked or the setup is not ready.
 
 Options:
   --executor <name>  Where agents and the verifier run: local (default) or lima
@@ -63,9 +67,9 @@ export async function runCommand(
   }
   const specPath = values.spec.replaceAll("\\", "/").replace(/^\.\//, "");
 
-  let outcome: Awaited<ReturnType<typeof runTask>>;
+  let outcome: Awaited<ReturnType<typeof run>>;
   try {
-    outcome = await runTask({
+    outcome = await run({
       root: io.cwd,
       specPath,
       runner,
@@ -77,7 +81,8 @@ export async function runCommand(
     if (
       err instanceof TasksFileError ||
       err instanceof TestsFileError ||
-      err instanceof StateFileError
+      err instanceof StateFileError ||
+      err instanceof GitError
     ) {
       io.stderr(`themis run: ${err.message}\n`);
       return ExitCode.Usage;
@@ -94,6 +99,11 @@ export async function runCommand(
     case "spec-unreadable":
     case "not-ready":
       return fail(outcome.message, ExitCode.Usage);
+    case "git-not-ready":
+      return fail(
+        `${outcome.message}. Run:\n${outcome.commands.map((c) => `  ${c}\n`).join("")}`.trimEnd(),
+        ExitCode.Usage,
+      );
     case "invalid-spec":
       for (const d of outcome.diagnostics) io.stdout(`${formatDiagnostic(specPath, d)}\n`);
       return fail(`${specPath} is invalid`, ExitCode.Invalid);
@@ -107,47 +117,72 @@ export async function runCommand(
         `${outcome.task} depends on ${outcome.missing.join(", ")}, not done yet`,
         ExitCode.Usage,
       );
-    case "nothing-to-run":
-      if (outcome.blocked.length > 0) {
-        return fail(
-          `no runnable task; failed or blocked: ${outcome.blocked.join(", ")} (run them explicitly to retry)`,
-          ExitCode.Invalid,
-        );
-      }
-      io.stdout(`all tasks are done (${outcome.done.length})\n`);
-      return ExitCode.Ok;
-    case "finished": {
-      const { state, task } = outcome;
-      const cost = state.iterations
-        .slice(state.attemptStart)
-        .reduce((sum, it) => sum + (it.worker.costUsd ?? 0), 0);
-      const used = state.iterations.length - state.attemptStart;
-      io.stdout(
-        `${task}: ${state.status} after ${used} ${used === 1 ? "iteration" : "iterations"}, $${cost.toFixed(4)}\n`,
-      );
-      for (const choice of state.choices)
-        io.stdout(`  decided: ${choice.question} -> ${choice.decision}\n`);
-      if (state.status === "done") return ExitCode.Ok;
-      io.stderr(
-        `${task} ${state.status}: ${state.reason ?? ""}\nsee .verify.log and .themis/runs/${task}/\n`,
-      );
-      return state.status === "blocked" ? ExitCode.Usage : ExitCode.Invalid;
-    }
+    case "finished":
+      break;
   }
+
+  if (outcome.ran.length === 0) {
+    const stuck = Object.entries(outcome.tasks).filter(
+      ([, t]) => t.status === "failed" || t.status === "blocked",
+    );
+    if (stuck.length > 0) {
+      return fail(
+        `no runnable task; failed or blocked: ${stuck.map(([id]) => id).join(", ")} (run them explicitly to retry)`,
+        ExitCode.Invalid,
+      );
+    }
+    io.stdout("all tasks are done\n");
+    return ExitCode.Ok;
+  }
+  let code: ExitCode = ExitCode.Ok;
+  for (const id of outcome.ran) {
+    const state = outcome.tasks[id];
+    if (state === undefined) continue;
+    const attempt = state.iterations.slice(state.attemptStart);
+    const cost = attempt.reduce(
+      (sum, it) => sum + (it.worker?.costUsd ?? 0) + (it.review?.costUsd ?? 0),
+      0,
+    );
+    io.stdout(
+      `${id}: ${state.status} after ${attempt.length} ${attempt.length === 1 ? "iteration" : "iterations"}, $${cost.toFixed(4)}${state.reason === null ? "" : ` (${state.reason})`}\n`,
+    );
+    if (state.status === "blocked") code = ExitCode.Usage;
+    else if (state.status === "failed" && code === ExitCode.Ok) code = ExitCode.Invalid;
+  }
+  if (code !== ExitCode.Ok)
+    io.stderr("see .verify.log in the task worktree and .themis/runs/<task>/\n");
+  return code;
 }
 
 function formatEvent(event: RunEvent): string {
+  const t = event.task;
   switch (event.type) {
+    case "task-start":
+      return `${t}: ${event.resumed ? "resuming" : "starting"}\n`;
     case "iteration-start":
-      return `${event.task} iteration ${event.iteration}/${event.max}: worker...\n`;
+      return `${t} iteration ${event.iteration}/${event.max}: worker...\n`;
     case "worker-done": {
       const cost = event.costUsd === null ? "" : `, $${event.costUsd.toFixed(4)}`;
       const status = event.ok ? "done" : `failed (${event.error ?? "unknown error"})`;
-      return `${event.task} iteration ${event.iteration}: worker ${status} in ${(event.durationMs / 1000).toFixed(0)}s${cost}; verifying...\n`;
+      return `${t} iteration ${event.iteration}: worker ${status} in ${(event.durationMs / 1000).toFixed(0)}s${cost}; verifying...\n`;
     }
     case "verify-done":
       return event.exit === 0
-        ? `${event.task} iteration ${event.iteration}: verify PASS\n`
-        : `${event.task} iteration ${event.iteration}: verify exit ${event.exit ?? "none"}${event.failedStep === null ? "" : ` at ${event.failedStep}`}\n`;
+        ? `${t} iteration ${event.iteration}: verify PASS; reviewing...\n`
+        : `${t} iteration ${event.iteration}: verify exit ${event.exit ?? "none"}${event.failedStep === null ? "" : ` at ${event.failedStep}`}\n`;
+    case "review-done": {
+      const cost = event.costUsd === null ? "" : ` ($${event.costUsd.toFixed(4)})`;
+      return event.verdict === "approve"
+        ? `${t} iteration ${event.iteration}: review approved${cost}; merging...\n`
+        : `${t} iteration ${event.iteration}: review asked for changes${cost}:\n${event.reasons.map((r) => `    - ${r}\n`).join("")}`;
+    }
+    case "merged":
+      return `${t}: merged and verified\n`;
+    case "merge-reverted":
+      return `${t}: merged result failed the verifier${event.failedStep === null ? "" : ` at ${event.failedStep}`}; merge undone\n`;
+    case "merge-conflict":
+      return `${t}: merge conflict on ${event.conflicts.join(", ")}; the worker will resolve it\n`;
+    case "task-end":
+      return `${t}: ${event.status}${event.reason === null ? "" : ` (${event.reason})`}\n`;
   }
 }

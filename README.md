@@ -12,7 +12,7 @@ The point is not generating a plan. It is **guaranteeing convergence**: an immut
 contract, one verifier with semantic exit codes, guards against shortcuts, and a
 retrospective loop that improves the agent configuration over time.
 
-> Status: early development (milestone M4). The format is at version `0.1`.
+> Status: early development (milestone M5). The format is at version `0.1`.
 
 ## The format
 
@@ -72,10 +72,20 @@ the workers.
 `approve tests` re-checks the files on disk and records their digests, with the spec, verifier
 and tool configuration, in `.themis/lock.json`: from then on the guard rejects any change.
 
-`run` drives one task at a time: the worker agent edits the code, then Themis runs the
-verifier itself; exit `1` feeds `.verify.log` into the next iteration, exit `2` blocks the task,
-running out of `limits.max_iterations` fails it. State is saved after every step
-(`.themis/state.json`), so a run can be interrupted and resumed.
+`run` executes the task graph, up to `limits.parallel` tasks at once, each in its own git
+worktree (`.themis/worktrees/<task>`, branch `themis/<task>`):
+
+1. the worker agent edits the code;
+2. Themis runs the verifier itself (exit `1` feeds `.verify.log` into the next iteration,
+   exit `2` blocks the task);
+3. a reviewer agent reads the committed diff and approves or asks for changes (scope creep,
+   faked behaviour, broken decisions);
+4. Themis merges into the current branch and runs the full verifier there, undoing its own
+   merge if the combination fails.
+
+Running out of `limits.max_iterations` or a merge conflict fails the task. State is saved
+after every step (`.themis/state.json`), so a run can be interrupted and resumed. The working
+tree must be clean and the locked contract committed before `run`.
 
 ### Running agents in a VM
 

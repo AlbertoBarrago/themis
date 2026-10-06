@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
 import { readIfExists } from "../fs/generated.js";
@@ -9,27 +9,48 @@ export const TASK_STATUSES = [
   "pending",
   "running",
   "verifying",
+  "reviewing",
+  "merging",
   "done",
   "failed",
   "blocked",
 ] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
+/** Statuses of a task interrupted mid-attempt, which resumes on the next run. */
+export const IN_PROGRESS: readonly TaskStatus[] = ["running", "verifying", "reviewing", "merging"];
+
 const iteration = z.strictObject({
   iteration: z.number().int().positive(),
   startedAt: z.string(),
-  worker: z.strictObject({
-    ok: z.boolean(),
-    error: z.string().optional(),
-    durationMs: z.number(),
-    costUsd: z.number().nullable(),
-    inputTokens: z.number(),
-    outputTokens: z.number(),
-  }),
+  /** `null` when the iteration resumed after an interruption and skipped the worker call. */
+  worker: z
+    .strictObject({
+      ok: z.boolean(),
+      error: z.string().optional(),
+      durationMs: z.number(),
+      costUsd: z.number().nullable(),
+      inputTokens: z.number(),
+      outputTokens: z.number(),
+    })
+    .nullable(),
   /** Verifier exit code; `null` when the verifier did not run or was killed. */
   verifyExit: z.number().int().nullable(),
   /** Step that failed, from `.verify.log`. */
   failedStep: z.string().nullable(),
+  /** Reviewer verdict, when the iteration reached review. */
+  review: z
+    .strictObject({
+      verdict: z.enum(["approve", "changes"]),
+      reasons: z.array(z.string()),
+      durationMs: z.number(),
+      costUsd: z.number().nullable(),
+    })
+    .optional(),
+  /** Set when the merged result failed the full verifier and Themis undid its merge. */
+  mergeReverted: z.boolean().optional(),
+  /** Paths that conflicted when merging into the working branch (the merge was aborted). */
+  mergeConflicts: z.array(z.string()).optional(),
 });
 export type IterationRecord = z.infer<typeof iteration>;
 
@@ -87,6 +108,13 @@ export async function readState(root: string): Promise<StateFile> {
   return parsed.data;
 }
 
+/**
+ * Writes the state atomically (temporary file, then rename): an interruption mid-write must
+ * never leave a truncated state file, since resuming depends on it.
+ */
 export async function writeState(root: string, state: StateFile): Promise<void> {
-  await writeFile(join(root, STATE_PATH), `${JSON.stringify(state, null, 2)}\n`);
+  const target = join(root, STATE_PATH);
+  const temporary = `${target}.${process.pid}.tmp`;
+  await writeFile(temporary, `${JSON.stringify(state, null, 2)}\n`);
+  await rename(temporary, target);
 }

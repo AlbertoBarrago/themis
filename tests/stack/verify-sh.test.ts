@@ -97,9 +97,33 @@ describe("verify.sh happy path", () => {
       "docker compose -f compose.yaml config -q",
       "docker compose -f compose.yaml up -d --wait",
       "npm run --silent migrate",
-      "vitest run tests/acceptance --retry=0 -t ^AC-12:",
-      "vitest run tests/acceptance --retry=0",
+      "vitest run tests/acceptance --retry=0 -t ^(AC-12):",
     ]);
+  });
+
+  it("runs exactly the given criteria, as one regex", async () => {
+    const p = await project({ steps: "acceptance" });
+    const result = verify(p, ["AC-3", "AC-1", "AC-10"]);
+    expect(result.code).toBe(0);
+    expect(await result.calls()).toEqual([
+      "vitest run tests/acceptance --retry=0 -t ^(AC-3|AC-1|AC-10):",
+    ]);
+  });
+
+  it("runs no criterion with none, but still requires the lock", async () => {
+    const p = await project({ steps: "typecheck acceptance" });
+    const result = verify(p, ["none"]);
+    expect(result.code).toBe(0);
+    expect(await result.calls()).toEqual(["tsc --noEmit"]);
+    const unlocked = await project({ steps: "acceptance", locked: false });
+    expect(verify(unlocked, ["none"]).code).toBe(2);
+  });
+
+  it("fails the full run at acceptance when no criteria are given", async () => {
+    const p = await project({ steps: "acceptance" });
+    const result = verify(p, [], { STUB_VITEST_ACCEPTANCE: "1" });
+    expect(result.code).toBe(1);
+    expect(await result.log()).toMatch(/^step: acceptance\nexit: 1/);
   });
 
   it("skips disabled steps and the task filter when no task is given", async () => {
@@ -131,7 +155,6 @@ describe("verify.sh failures", () => {
     ["infra", { STUB_DOCKER_UP: "1" }, 2, 6],
     ["migrate", { STUB_NPM: "1" }, 1, 7],
     ["acceptance AC-1", { STUB_VITEST_TASK: "1" }, 1, 8],
-    ["acceptance", { STUB_VITEST_ACCEPTANCE: "1" }, 1, 9],
   ] as const)("stops at %s with exit %s (%j)", async (step, env, code, calls) => {
     const p = await project();
     const result = verify(p, ["AC-1"], env);
@@ -178,11 +201,14 @@ describe("verify.sh failures", () => {
     expect(await result.log()).toContain("step: preflight");
   });
 
-  it.each(["AC-01", "ac-1", "AC-1;rm"])("exits 2 for invalid task id %s", async (id) => {
-    const p = await project();
-    expect(verify(p, [id]).code).toBe(2);
-    expect(await verify(p, [id]).calls()).toEqual([]);
-  });
+  it.each([["AC-01"], ["ac-1"], ["AC-1;rm"], ["AC-1", "none"], ["AC-1", ""]])(
+    "exits 2 for invalid criteria %j",
+    async (...ids) => {
+      const p = await project();
+      expect(verify(p, ids).code).toBe(2);
+      expect(await verify(p, ids).calls()).toEqual([]);
+    },
+  );
 
   it("exits 1 when the guard finds a violation, before any other step", async () => {
     const p = await project();
