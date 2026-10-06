@@ -9,8 +9,8 @@ export interface GeneratedFile {
   mode?: number;
 }
 
-/** Ordito's own files under `.ordito/`, generated in every project. */
-export async function orditoFiles(frontmatter: Frontmatter): Promise<GeneratedFile[]> {
+/** Themis's own files under `.themis/`, generated in every project. */
+export async function themisFiles(frontmatter: Frontmatter): Promise<GeneratedFile[]> {
   const verify = render(await readTemplate("node-ts/verify.sh"), {
     STEPS: frontmatter.verify.join(" "),
   });

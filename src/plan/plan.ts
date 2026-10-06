@@ -19,7 +19,7 @@ import {
 } from "./schema.js";
 import { validatePlan } from "./validate.js";
 
-export const PLANNER_INSTRUCTIONS = ".ordito/agents/planner.md";
+export const PLANNER_INSTRUCTIONS = ".themis/agents/planner.md";
 
 export interface PlanOptions {
   root: string;
@@ -66,12 +66,12 @@ export async function loadSpec(root: string, specPath: string): Promise<LoadedSp
   return { ok: true, spec, source, digest: sha256(source) };
 }
 
-/** A `.ordito/tasks.json` that exists but cannot be used; never silently replaced. */
+/** A `.themis/tasks.json` that exists but cannot be used; never silently replaced. */
 export class TasksFileError extends Error {
   override readonly name = "TasksFileError";
 }
 
-/** Reads `.ordito/tasks.json`; `undefined` when absent, throws {@link TasksFileError} when invalid. */
+/** Reads `.themis/tasks.json`; `undefined` when absent, throws {@link TasksFileError} when invalid. */
 export async function readTasks(root: string): Promise<TasksFile | undefined> {
   const source = await readIfExists(join(root, TASKS_PATH));
   if (source === undefined) return undefined;
@@ -98,10 +98,10 @@ export async function writeTasks(root: string, tasks: TasksFile): Promise<void> 
 }
 
 /**
- * `ordito plan`: asks the planner agent for a task graph, validates it against the spec and
- * writes a draft `.ordito/tasks.json` for the human gate. Rejected answers are sent back with
+ * `themis plan`: asks the planner agent for a task graph, validates it against the spec and
+ * writes a draft `.themis/tasks.json` for the human gate. Rejected answers are sent back with
  * the reasons (see {@link callStructured}). Every call is logged under
- * `.ordito/runs/plan/`.
+ * `.themis/runs/plan/`.
  */
 export async function plan(options: PlanOptions): Promise<PlanOutcome> {
   const { root, specPath, runner } = options;
@@ -111,7 +111,7 @@ export async function plan(options: PlanOptions): Promise<PlanOutcome> {
   if (instructions === undefined) {
     return {
       kind: "not-initialized",
-      message: `${PLANNER_INSTRUCTIONS} not found; run ordito init first`,
+      message: `${PLANNER_INSTRUCTIONS} not found; run themis init first`,
     };
   }
   const loaded = await loadSpec(root, specPath);
@@ -155,7 +155,7 @@ export async function plan(options: PlanOptions): Promise<PlanOutcome> {
       return { kind: "invalid-plan", errors: outcome.errors, totals: outcome.totals };
     case "ok": {
       const tasks: TasksFile = {
-        ordito: "0.1",
+        themis: "0.1",
         spec: specPath,
         specDigest: digest,
         status: "draft",
@@ -191,7 +191,7 @@ export interface ApproveOptions {
 }
 
 /**
- * `ordito approve plan`: the human gate. Refuses a plan made for a different spec, and one
+ * `themis approve plan`: the human gate. Refuses a plan made for a different spec, and one
  * with blocking questions unless forced: those mean the criteria cannot be turned into a
  * coherent contract as written.
  */

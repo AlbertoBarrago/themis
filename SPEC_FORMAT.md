@@ -1,24 +1,24 @@
-# Ordito Spec Format, version 0.1
+# Themis Spec Format, version 0.1
 
 Status: draft. Version identifier: `0.1`.
 
-This document defines the `spec.md` file format used by Ordito, together with the
+This document defines the `spec.md` file format used by Themis, together with the
 contract that binds a spec to its acceptance tests and to its verifier. It is meant to be
 useful on its own: a team can write specs, lock acceptance tests and run a verifier by hand,
-following only this document, without the `ordito` CLI.
+following only this document, without the `themis` CLI.
 
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted as described
 in RFC 2119.
 
 ## 1. Concepts
 
-In weaving, the *warp* (Italian: *ordito*) is the set of fixed threads stretched on the loom;
-the *weft* (*trama*) is what gets woven through them.
+Themis is the Titaness of divine law and order. The format separates the law from the work
+done under it:
 
-- **Warp, owned by humans.** The spec (decisions and acceptance criteria) and the locked
+- **The law, owned by humans.** The spec (decisions and acceptance criteria) and the locked
   acceptance tests that translate it into an executable contract. Agents read it and never
   change it.
-- **Weft, produced by agents.** The implementation, iterated until the verifier passes.
+- **The work, produced by agents.** The implementation, iterated until the verifier passes.
 
 Three human gates exist, and only three:
 
@@ -45,7 +45,7 @@ Line endings MAY be LF or CRLF. A leading byte order mark is ignored.
 
 ```markdown
 ---
-ordito: 0.1
+themis: 0.1
 stack: node-ts
 verify: [typecheck, lint, unit, acceptance]
 ---
@@ -69,16 +69,16 @@ line containing exactly `---`. Its content MUST be a YAML mapping.
 
 | Field      | Required | Type                     | Default                                                    |
 | ---------- | -------- | ------------------------ | ---------------------------------------------------------- |
-| `ordito`   | yes      | version                  |                                                            |
+| `themis`   | yes      | version                  |                                                            |
 | `stack`    | yes      | enum                     |                                                            |
 | `verify`   | yes      | list of enum             |                                                            |
 | `limits`   | no       | mapping                  | `{ max_iterations: 5, parallel: 3 }`                       |
 | `models`   | no       | mapping                  | `{ planner: strong, worker: fast, reviewer: strong, retro: strong }` |
 
-### 3.1 `ordito`
+### 3.1 `themis`
 
 The format version. For this document it MUST be `0.1`. It MAY be written as a bare scalar
-(`ordito: 0.1`) or a quoted string (`ordito: "0.1"`); tools MUST compare the literal source
+(`themis: 0.1`) or a quoted string (`themis: "0.1"`); tools MUST compare the literal source
 text, so `0.10` is not `0.1`. Tools MUST reject versions they do not implement.
 
 ### 3.2 `stack`
@@ -267,7 +267,7 @@ stable code and, for frontmatter problems, the dotted field path (for example
 | `frontmatter-unclosed`   | error    | No closing `---`.                                 |
 | `yaml-syntax`            | error    | The frontmatter is not valid YAML.                |
 | `frontmatter-not-mapping`| error    | The frontmatter is not a YAML mapping.            |
-| `unsupported-version`    | error    | `ordito` is not a version the tool implements.    |
+| `unsupported-version`    | error    | `themis` is not a version the tool implements.    |
 | `unknown-field`          | error    | Unknown frontmatter key.                          |
 | `invalid-field`          | error    | A frontmatter value is missing or has the wrong type or value. |
 | `title-missing`          | error    | No level-1 heading.                               |
@@ -289,6 +289,6 @@ stable code and, for frontmatter problems, the dotted field path (for example
 
 ## 8. Versioning
 
-The `ordito` field identifies the format version. While the format is in `0.x`, a minor
+The `themis` field identifies the format version. While the format is in `0.x`, a minor
 version change MAY be incompatible. Tools MUST reject a spec whose version they do not
 implement rather than guess.

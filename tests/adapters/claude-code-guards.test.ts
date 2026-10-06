@@ -14,7 +14,7 @@ async function settings(): Promise<unknown> {
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), "ordito-guards-"));
+  root = await mkdtemp(join(tmpdir(), "themis-guards-"));
 });
 
 describe("ClaudeCodeGuardInstaller", () => {

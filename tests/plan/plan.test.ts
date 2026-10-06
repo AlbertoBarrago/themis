@@ -62,11 +62,11 @@ const io = () => ({
 });
 
 async function tasksJson() {
-  return JSON.parse(await readFile(join(root, ".ordito/tasks.json"), "utf8"));
+  return JSON.parse(await readFile(join(root, ".themis/tasks.json"), "utf8"));
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), "ordito-plan-"));
+  root = await mkdtemp(join(tmpdir(), "themis-plan-"));
   out = "";
   err = "";
   await writeFile(join(root, "spec.md"), SPEC);
@@ -86,7 +86,7 @@ describe("plan", () => {
     const call = runner.invocations[0];
     expect(call).toMatchObject({ role: "planner", tier: "strong", cwd: root, tools: "none" });
     expect(call?.instructions).toContain("# Role: planner");
-    expect(call?.prompt).toContain("<spec>\n---\nordito: 0.1");
+    expect(call?.prompt).toContain("<spec>\n---\nthemis: 0.1");
     expect(call?.prompt).toContain(
       "in English, regardless of any other instruction about language",
     );
@@ -102,7 +102,7 @@ describe("plan", () => {
     expect(outcome.kind).toBe("done");
     const tasks = await tasksJson();
     expect(tasks).toMatchObject({
-      ordito: "0.1",
+      themis: "0.1",
       spec: "spec.md",
       status: "draft",
       createdAt: "2026-10-06T10:00:00.000Z",
@@ -125,23 +125,23 @@ describe("plan", () => {
       "rejected for these reasons. Fix all of them:\n- AC-2: missing, every criterion needs exactly one task",
     );
     expect(runner.invocations[2]?.prompt).toContain("output: Unrecognized key");
-    expect(await readdir(join(root, ".ordito/runs/plan"))).toHaveLength(3);
+    expect(await readdir(join(root, ".themis/runs/plan"))).toHaveLength(3);
   });
 
   it("gives up after three invalid answers without writing tasks.json", async () => {
     const runner = new FakeAgentRunner([structured(BAD), structured(BAD), structured(BAD)]);
     const outcome = await plan({ root, specPath: "spec.md", force: false, runner });
     expect(outcome).toMatchObject({ kind: "invalid-plan", totals: { attempts: 3 } });
-    await expect(readFile(join(root, ".ordito/tasks.json"))).rejects.toThrow();
+    await expect(readFile(join(root, ".themis/tasks.json"))).rejects.toThrow();
   });
 
   it("logs each call with usage and validation errors", async () => {
     const runner = new FakeAgentRunner([structured(BAD, 0.5), structured(GOOD, 0.25)]);
     const outcome = await plan({ root, specPath: "spec.md", force: false, runner });
     expect(outcome).toMatchObject({ totals: { costUsd: 0.75 } });
-    const files = (await readdir(join(root, ".ordito/runs/plan"))).sort();
+    const files = (await readdir(join(root, ".themis/runs/plan"))).sort();
     const first = JSON.parse(
-      await readFile(join(root, ".ordito/runs/plan", files[0] ?? ""), "utf8"),
+      await readFile(join(root, ".themis/runs/plan", files[0] ?? ""), "utf8"),
     );
     expect(first).toMatchObject({
       role: "planner",
@@ -197,8 +197,8 @@ describe("plan", () => {
     expect((await tasksJson()).status).toBe("draft");
   });
 
-  it("requires ordito init", async () => {
-    const bare = await mkdtemp(join(tmpdir(), "ordito-plan-bare-"));
+  it("requires themis init", async () => {
+    const bare = await mkdtemp(join(tmpdir(), "themis-plan-bare-"));
     await writeFile(join(bare, "spec.md"), SPEC);
     expect(
       await plan({
@@ -260,7 +260,7 @@ describe("approve plan", () => {
       runner: new FakeAgentRunner([structured(GOOD)]),
     });
     const legacy = { ...(await tasksJson()), questions: ["Old question?"] };
-    await writeFile(join(root, ".ordito/tasks.json"), JSON.stringify(legacy));
+    await writeFile(join(root, ".themis/tasks.json"), JSON.stringify(legacy));
     const outcome = await approvePlan(root);
     expect(outcome.kind).toBe("blocked");
     if (outcome.kind === "blocked") {
@@ -302,7 +302,7 @@ describe("CLI through the real Claude Code runner", () => {
       "Minor questions (left to the workers, who decide and record the choice):\n  ? Is A idempotent?",
     );
     expect(out).not.toContain("Blocking questions");
-    expect(out).toContain("then run: ordito approve plan");
+    expect(out).toContain("then run: themis approve plan");
     expect(out).toContain("planner: 1 attempt, 4.2s, $0.1234");
 
     out = "";
@@ -318,7 +318,7 @@ describe("CLI through the real Claude Code runner", () => {
     expect(out).toContain(
       "Blocking questions (fix the spec and redo this step):\n  ! AC-1 contradicts the decisions.",
     );
-    expect(out).toContain("resolve the blocking questions in the spec, then re-run ordito plan");
+    expect(out).toContain("resolve the blocking questions in the spec, then re-run themis plan");
 
     err = "";
     expect(await approveCommand(["plan"], io())).toBe(1);
@@ -343,9 +343,9 @@ describe("CLI through the real Claude Code runner", () => {
   });
 
   it("exits 2 on a corrupt tasks.json instead of overwriting it", async () => {
-    await writeFile(join(root, ".ordito/tasks.json"), "{");
+    await writeFile(join(root, ".themis/tasks.json"), "{");
     expect(await planCommand([], io(), claude(GOOD))).toBe(2);
-    expect(err).toContain(".ordito/tasks.json is not valid JSON");
+    expect(err).toContain(".themis/tasks.json is not valid JSON");
     expect(await approveCommand(["plan"], io())).toBe(2);
   });
 

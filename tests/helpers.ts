@@ -7,7 +7,7 @@ export function lines(...rows: string[]): string {
 
 export const VALID_FRONTMATTER = [
   "---",
-  "ordito: 0.1",
+  "themis: 0.1",
   "stack: node-ts",
   "verify: [typecheck, acceptance]",
   "---",

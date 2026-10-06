@@ -15,7 +15,7 @@ export function testAuthorPrompt(
 ): string {
   const plan = tasks.tasks.map((t) => `- ${t.id} (${t.title}): ${t.scope}`).join("\n");
   const parts = [
-    `Write the acceptance tests for the Ordito spec below (${specPath}).`,
+    `Write the acceptance tests for the Themis spec below (${specPath}).`,
     "",
     "<spec>",
     specSource.trimEnd(),

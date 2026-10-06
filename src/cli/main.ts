@@ -9,10 +9,10 @@ try {
     stderr: (text) => process.stderr.write(text),
   });
 } catch (err) {
-  // An unexpected exception is a bug in Ordito, never a problem with the user's spec, so it
+  // An unexpected exception is a bug in Themis, never a problem with the user's spec, so it
   // must not surface as exit code 1 ("fix your input").
   process.stderr.write(
-    `ordito: internal error: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
+    `themis: internal error: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
   );
   process.exitCode = ExitCode.Usage;
 }

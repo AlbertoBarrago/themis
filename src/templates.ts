@@ -11,9 +11,9 @@ export function readTemplate(path: string): Promise<string> {
   return readFile(new URL(path, TEMPLATES_ROOT), "utf8");
 }
 
-/** Replaces `__ORDITO_<KEY>__` placeholders; a placeholder left unreplaced is a bug. */
+/** Replaces `__THEMIS_<KEY>__` placeholders; a placeholder left unreplaced is a bug. */
 export function render(template: string, values: Readonly<Record<string, string>>): string {
-  const out = template.replace(/__ORDITO_([A-Z_]+)__/g, (match, key: string) => {
+  const out = template.replace(/__THEMIS_([A-Z_]+)__/g, (match, key: string) => {
     const value = values[key];
     if (value === undefined) throw new Error(`template placeholder ${match} has no value`);
     return value;

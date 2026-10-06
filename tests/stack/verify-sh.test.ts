@@ -24,7 +24,7 @@ async function project(options: { steps?: string; locked?: boolean } = {}) {
   const verify = render(await readTemplate("node-ts/verify.sh"), {
     STEPS: options.steps ?? ALL_STEPS,
   });
-  await p.write(".ordito/verify.sh", verify, 0o755);
+  await p.write(".themis/verify.sh", verify, 0o755);
   await p.write("package.json", JSON.stringify({ type: "module", scripts: { migrate: "x" } }));
   await p.write("compose.yaml", "services: {}\n");
   await p.write("node_modules/.bin/tsc", stub("tsc", 'exit "${STUB_TSC:-0}"'), 0o755);
@@ -63,7 +63,7 @@ async function project(options: { steps?: string; locked?: boolean } = {}) {
 }
 
 function verify(p: Project, args: string[] = [], env: Record<string, string> = {}) {
-  const result = p.run(join(p.root, ".ordito/verify.sh"), args, {
+  const result = p.run(join(p.root, ".themis/verify.sh"), args, {
     PATH: [join(p.root, "stubs"), dirname(process.execPath), "/usr/bin", "/bin"].join(":"),
     STUB_LOG: join(p.root, "stub.log"),
     ...env,
@@ -145,9 +145,9 @@ describe("verify.sh failures", () => {
     expect(log).not.toMatch(/\u001b/);
   });
 
-  it("keeps only the last ORDITO_LOG_LINES lines", async () => {
+  it("keeps only the last THEMIS_LOG_LINES lines", async () => {
     const p = await project({ steps: "typecheck" });
-    const log = await verify(p, [], { STUB_TSC: "1", ORDITO_LOG_LINES: "2" }).log();
+    const log = await verify(p, [], { STUB_TSC: "1", THEMIS_LOG_LINES: "2" }).log();
     expect(log).toBe(
       "step: typecheck\nexit: 1\ncommand: " +
         `${p.root}/node_modules/.bin/tsc --noEmit\n--- last 2 lines of output ---\ntsc line 4\ntsc line 5\n`,
@@ -195,7 +195,7 @@ describe("verify.sh failures", () => {
 
   it("passes through the guard's environment errors", async () => {
     const p = await project();
-    await p.write(".ordito/lock.json", "{");
+    await p.write(".themis/lock.json", "{");
     const result = verify(p);
     expect(result.code).toBe(2);
     expect(await result.log()).toMatch(/^step: guard\nexit: 2/);
@@ -224,6 +224,6 @@ describe("verify.sh failures", () => {
     const p = await project({ locked: false });
     const result = verify(p);
     expect(result.code).toBe(2);
-    expect(await result.log()).toContain("contract not locked: run ordito approve tests");
+    expect(await result.log()).toContain("contract not locked: run themis approve tests");
   });
 });

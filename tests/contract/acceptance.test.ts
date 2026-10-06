@@ -82,7 +82,7 @@ async function approvedPlan() {
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), "ordito-tests-"));
+  root = await mkdtemp(join(tmpdir(), "themis-tests-"));
   out = "";
   err = "";
   await writeFile(join(root, "spec.md"), SPEC);
@@ -129,7 +129,7 @@ describe("generateTests", () => {
     expect(call?.prompt).toContain('named exactly "AC-<n>: <title>"');
 
     expect(await read("tests/acceptance/support/harness.ts")).toBe("export const port = 0;\n");
-    expect(JSON.parse(await read(".ordito/tests.json"))).toMatchObject({
+    expect(JSON.parse(await read(".themis/tests.json"))).toMatchObject({
       status: "draft",
       files: [
         "tests/acceptance/ac-1.test.ts",
@@ -207,7 +207,7 @@ describe("generateTests", () => {
     expect(
       (await generateTests({ root, specPath: "spec.md", force: true, runner: failing })).kind,
     ).toBe("agent-failed");
-    expect(await read(".ordito/lock.json")).toContain("tests/acceptance/ac-1.test.ts");
+    expect(await read(".themis/lock.json")).toContain("tests/acceptance/ac-1.test.ts");
     expect(await read("tests/acceptance/ac-1.test.ts")).toContain("AC-1: A");
   });
 });
@@ -234,17 +234,17 @@ describe("approveTests", () => {
       now: () => new Date("2026-10-06T12:00:00.000Z"),
     });
     expect(outcome.kind).toBe("approved");
-    const lock = JSON.parse(await read(".ordito/lock.json"));
+    const lock = JSON.parse(await read(".themis/lock.json"));
     expect(lock).toMatchObject({
-      ordito: "0.1",
+      themis: "0.1",
       lockedAt: "2026-10-06T12:00:00.000Z",
       base: head,
       dirs: ["tests/acceptance"],
     });
     expect(Object.keys(lock.files)).toEqual([
       ".claude/settings.json",
-      ".ordito/guard.mjs",
-      ".ordito/verify.sh",
+      ".themis/guard.mjs",
+      ".themis/verify.sh",
       "biome.json",
       "spec.md",
       "tests/acceptance/ac-1.test.ts",
@@ -253,7 +253,7 @@ describe("approveTests", () => {
       "tsconfig.json",
       "vitest.config.ts",
     ]);
-    expect(JSON.parse(await read(".ordito/tests.json")).status).toBe("approved");
+    expect(JSON.parse(await read(".themis/tests.json")).status).toBe("approved");
     expect(
       (await approveTests({ root, executor: new LocalExecutor(), agentConfigFiles: [] })).kind,
     ).toBe("already-approved");
@@ -262,7 +262,7 @@ describe("approveTests", () => {
   it("produces a lock the generated guard accepts, and rejects tampering", async () => {
     await approveTests({ root, executor: new LocalExecutor(), agentConfigFiles: [] });
     const guard = () =>
-      spawnSync(process.execPath, [".ordito/guard.mjs"], { cwd: root, encoding: "utf8" });
+      spawnSync(process.execPath, [".themis/guard.mjs"], { cwd: root, encoding: "utf8" });
     expect(guard().status).toBe(0);
 
     await writeFile(join(root, "tests/acceptance/ac-1.test.ts"), "changed");
@@ -273,7 +273,7 @@ describe("approveTests", () => {
 
   it("uses a null base without commits", async () => {
     await approveTests({ root, executor: new LocalExecutor(), agentConfigFiles: [] });
-    expect(JSON.parse(await read(".ordito/lock.json")).base).toBeNull();
+    expect(JSON.parse(await read(".themis/lock.json")).base).toBeNull();
   });
 
   it("re-validates the files on disk, including human edits", async () => {
@@ -287,13 +287,13 @@ describe("approveTests", () => {
       kind: "invalid-tests",
       errors: ['tests/acceptance/ac-2.test.ts:1: forbidden marker ".only("'],
     });
-    await expect(read(".ordito/lock.json")).rejects.toThrow();
+    await expect(read(".themis/lock.json")).rejects.toThrow();
   });
 
   it("refuses blocking questions unless forced", async () => {
-    const state = JSON.parse(await read(".ordito/tests.json"));
+    const state = JSON.parse(await read(".themis/tests.json"));
     state.questions = [{ text: "AC-2 is untestable", severity: "blocking" }];
-    await writeFile(join(root, ".ordito/tests.json"), JSON.stringify(state));
+    await writeFile(join(root, ".themis/tests.json"), JSON.stringify(state));
     expect(
       (await approveTests({ root, executor: new LocalExecutor(), agentConfigFiles: [] })).kind,
     ).toBe("blocked");
@@ -310,12 +310,12 @@ describe("approveTests", () => {
   });
 
   it("requires the verifier to exist", async () => {
-    await rm(join(root, ".ordito/verify.sh"));
+    await rm(join(root, ".themis/verify.sh"));
     expect(
       await approveTests({ root, executor: new LocalExecutor(), agentConfigFiles: [] }),
     ).toEqual({
       kind: "missing-contract-file",
-      path: ".ordito/verify.sh",
+      path: ".themis/verify.sh",
     });
   });
 });
@@ -347,20 +347,20 @@ describe("CLI", () => {
     );
     expect(out).toContain("Minor questions");
     expect(out).toContain("test author: 1 attempt, 60.0s, $0.5000");
-    expect(out).toContain("then run: ordito approve tests");
+    expect(out).toContain("then run: themis approve tests");
 
     out = "";
     expect(await approveCommand(["tests"], io(), claude(TESTS))).toBe(0);
     expect(out).toContain(
-      "contract locked: 10 files in .ordito/lock.json (no git commit: markers are checked on every file)",
+      "contract locked: 10 files in .themis/lock.json (no git commit: markers are checked on every file)",
     );
-    expect(out).toContain("next: ordito run");
+    expect(out).toContain("next: themis run");
   });
 
   it("explains missing prerequisites", async () => {
     expect(await testsCommand([], io(), claude(TESTS))).toBe(2);
     expect(err).toContain("the plan is not approved yet");
     expect(await approveCommand(["tests"], io(), claude(TESTS))).toBe(2);
-    expect(err).toContain("no acceptance tests to approve; run ordito tests first");
+    expect(err).toContain("no acceptance tests to approve; run themis tests first");
   });
 });

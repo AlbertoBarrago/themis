@@ -11,9 +11,9 @@ export class Project {
   private constructor(readonly root: string) {}
 
   static async create(prefix: string): Promise<Project> {
-    const project = new Project(await mkdtemp(join(tmpdir(), `ordito-${prefix}-`)));
-    await mkdir(join(project.root, ".ordito"));
-    await copyFile(new URL("guard.mjs", TEMPLATES), join(project.root, ".ordito/guard.mjs"));
+    const project = new Project(await mkdtemp(join(tmpdir(), `themis-${prefix}-`)));
+    await mkdir(join(project.root, ".themis"));
+    await copyFile(new URL("guard.mjs", TEMPLATES), join(project.root, ".themis/guard.mjs"));
     return project;
   }
 
@@ -22,7 +22,7 @@ export class Project {
     await writeFile(join(this.root, path), content, mode === undefined ? {} : { mode });
   }
 
-  /** Writes `.ordito/lock.json` with the current digests of `files`. */
+  /** Writes `.themis/lock.json` with the current digests of `files`. */
   async lock(files: string[], options: { dirs?: string[]; base?: string | null } = {}) {
     const digests: Record<string, string> = {};
     const { readFile } = await import("node:fs/promises");
@@ -32,9 +32,9 @@ export class Project {
         .digest("hex");
     }
     await this.write(
-      ".ordito/lock.json",
+      ".themis/lock.json",
       JSON.stringify({
-        ordito: "0.1",
+        themis: "0.1",
         lockedAt: new Date(0).toISOString(),
         base: options.base ?? null,
         dirs: options.dirs ?? [],
@@ -69,6 +69,6 @@ export class Project {
   }
 
   guard() {
-    return this.run(process.execPath, [".ordito/guard.mjs"]);
+    return this.run(process.execPath, [".themis/guard.mjs"]);
   }
 }

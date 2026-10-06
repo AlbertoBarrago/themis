@@ -10,11 +10,11 @@ import { LocalExecutor } from "../../runtime/local-executor.js";
 import { formatDiagnostic } from "../../spec/diagnostics.js";
 import { type CliIo, ExitCode } from "../io.js";
 
-export const TESTS_HELP = `Usage: ordito tests [--spec <path>] [--agent <name>] [--force]
+export const TESTS_HELP = `Usage: themis tests [--spec <path>] [--agent <name>] [--force]
 
 Asks the test-author agent for acceptance tests covering every criterion and writes them
 under tests/acceptance/ as a draft. Read them (and edit them if needed), then run:
-ordito approve tests
+themis approve tests
 
 Options:
   --spec <path>     Spec file (default: spec.md)
@@ -43,13 +43,13 @@ export async function testsCommand(
     return ExitCode.Ok;
   }
   if (positionals.length > 0) {
-    io.stderr(`ordito tests: unexpected argument "${positionals[0]}"\n\n${TESTS_HELP}`);
+    io.stderr(`themis tests: unexpected argument "${positionals[0]}"\n\n${TESTS_HELP}`);
     return ExitCode.Usage;
   }
   const runner = runnerFor(values.agent, executor);
   if (runner === undefined) {
     io.stderr(
-      `ordito tests: unknown agent "${values.agent}" (available: ${availableAgents().join(", ")})\n`,
+      `themis tests: unknown agent "${values.agent}" (available: ${availableAgents().join(", ")})\n`,
     );
     return ExitCode.Usage;
   }
@@ -61,14 +61,14 @@ export async function testsCommand(
     outcome = await generateTests({ root: io.cwd, specPath, force: values.force, runner });
   } catch (err) {
     if (err instanceof TasksFileError || err instanceof TestsFileError) {
-      io.stderr(`ordito tests: ${err.message}\n`);
+      io.stderr(`themis tests: ${err.message}\n`);
       return ExitCode.Usage;
     }
     throw err;
   }
 
   const fail = (message: string, code: ExitCode) => {
-    io.stderr(`ordito tests: ${message}\n`);
+    io.stderr(`themis tests: ${message}\n`);
     return code;
   };
   switch (outcome.kind) {
@@ -77,15 +77,15 @@ export async function testsCommand(
       return fail(outcome.message, ExitCode.Usage);
     case "invalid-spec":
       for (const d of outcome.diagnostics) io.stdout(`${formatDiagnostic(specPath, d)}\n`);
-      return fail(`${specPath} is invalid, fix it first (ordito check)`, ExitCode.Invalid);
+      return fail(`${specPath} is invalid, fix it first (themis check)`, ExitCode.Invalid);
     case "plan-not-approved":
       return fail(
-        "the plan is not approved yet: run ordito plan, then ordito approve plan",
+        "the plan is not approved yet: run themis plan, then themis approve plan",
         ExitCode.Usage,
       );
     case "spec-changed":
       return fail(
-        "the spec changed since the plan was approved; re-run ordito plan",
+        "the spec changed since the plan was approved; re-run themis plan",
         ExitCode.Invalid,
       );
     case "contract-locked":
@@ -111,7 +111,7 @@ export async function testsCommand(
     case "invalid-tests":
       return fail(
         `no valid tests after ${outcome.totals.attempts} attempts:\n${outcome.errors.map((e) => `  - ${e}\n`).join("")}` +
-          `Logs: .ordito/runs/tests/\n${formatTotals("test author", outcome.totals)}`,
+          `Logs: .themis/runs/tests/\n${formatTotals("test author", outcome.totals)}`,
         ExitCode.Invalid,
       );
     case "done":
@@ -133,8 +133,8 @@ export async function testsCommand(
   io.stdout(`\n${formatTotals("test author", outcome.totals)}`);
   io.stdout(
     outcome.state.questions.some((q) => q.severity === "blocking")
-      ? "resolve the blocking questions in the spec, then re-run ordito plan and ordito tests --force\n"
-      : "read the tests (you may edit them), then run: ordito approve tests\n",
+      ? "resolve the blocking questions in the spec, then re-run themis plan and themis tests --force\n"
+      : "read the tests (you may edit them), then run: themis approve tests\n",
   );
   return ExitCode.Ok;
 }

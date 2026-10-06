@@ -1,12 +1,12 @@
 /**
  * Paths that make up the node-ts contract. Agents must not modify them (enforced by the
- * guard step and, as defense in depth, by agent-side protections), and `ordito approve tests`
+ * guard step and, as defense in depth, by agent-side protections), and `themis approve tests`
  * locks the files among them.
  */
 export const ACCEPTANCE_DIR = "tests/acceptance";
-export const VERIFY_SCRIPT = ".ordito/verify.sh";
-export const GUARD_SCRIPT = ".ordito/guard.mjs";
-export const AGENTS_DIR = ".ordito/agents";
+export const VERIFY_SCRIPT = ".themis/verify.sh";
+export const GUARD_SCRIPT = ".themis/guard.mjs";
+export const AGENTS_DIR = ".themis/agents";
 
 /** Tool configuration that could weaken verification if an agent changed it. */
 export const TOOL_CONFIG_FILES = ["tsconfig.json", "biome.json", "vitest.config.ts"] as const;
@@ -19,7 +19,7 @@ export const AGENT_ROLES_TEMPLATES = [
   "retro",
 ] as const;
 
-export const LOCK_PATH = ".ordito/lock.json";
+export const LOCK_PATH = ".themis/lock.json";
 
 /**
  * Markers that let code or tests dodge verification. Mirrors `MARKERS` in
@@ -39,7 +39,7 @@ export const FORBIDDEN_MARKERS: ReadonlyArray<readonly [string, RegExp]> = [
 ];
 
 /**
- * Files whose digests `ordito approve tests` records, besides everything under
+ * Files whose digests `themis approve tests` records, besides everything under
  * {@link ACCEPTANCE_DIR}. Optional files are locked only when present.
  */
 export function contractFiles(specPath: string): { required: string[]; optional: string[] } {
@@ -50,11 +50,11 @@ export function contractFiles(specPath: string): { required: string[]; optional:
 }
 
 /**
- * Everything agents must not write. `.ordito/` is protected as a whole: only the CLI writes
+ * Everything agents must not write. `.themis/` is protected as a whole: only the CLI writes
  * there (tasks, state, run logs).
  *
  * @param specPath Project-relative path of the spec.
  */
 export function protectedPaths(specPath: string): string[] {
-  return [`${ACCEPTANCE_DIR}/**`, ".ordito/**", specPath, ...TOOL_CONFIG_FILES];
+  return [`${ACCEPTANCE_DIR}/**`, ".themis/**", specPath, ...TOOL_CONFIG_FILES];
 }

@@ -71,7 +71,7 @@ describe("ClaudeCodeRunner arguments", () => {
   it("maps tiers to models, with environment overrides", () => {
     const runner = new ClaudeCodeRunner({
       executor: new FakeExecutor(),
-      env: { ORDITO_CLAUDE_MODEL_FAST: "haiku" },
+      env: { THEMIS_CLAUDE_MODEL_FAST: "haiku" },
     });
     expect(runner.model("strong")).toBe("opus");
     expect(runner.model("fast")).toBe("haiku");
@@ -80,7 +80,7 @@ describe("ClaudeCodeRunner arguments", () => {
   it("anchors inline rules to the cwd", () => {
     expect(inlineDenyRule("spec.md")).toBe("Edit(./spec.md)");
     expect(inlineDenyRule("/spec.md")).toBe("Edit(./spec.md)");
-    expect(inlineDenyRule("./.ordito/**")).toBe("Edit(./.ordito/**)");
+    expect(inlineDenyRule("./.themis/**")).toBe("Edit(./.themis/**)");
   });
 
   it("grants read-only tools", () => {

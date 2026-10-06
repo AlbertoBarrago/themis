@@ -4,7 +4,7 @@ Status: accepted (2026-10-06)
 
 ## Context
 
-Ordito ships as the npm package `ordito`. Its first supported stack is `node-ts`, so users
+Themis ships as the npm package `themis`. Its first supported stack is `node-ts`, so users
 already have Node.js installed.
 
 ## Decision

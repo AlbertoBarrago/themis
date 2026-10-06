@@ -20,7 +20,7 @@ export interface WriteOptions {
 }
 
 /**
- * Writes a file Ordito owns, idempotently: identical content is left alone and different
+ * Writes a file Themis owns, idempotently: identical content is left alone and different
  * content is only replaced with `force`, so re-running `init` never clobbers local edits
  * silently.
  */

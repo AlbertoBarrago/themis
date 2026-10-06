@@ -48,9 +48,9 @@ export class ClaudeCodeRunner implements AgentRunner {
     this.#command = options.command ?? "claude";
   }
 
-  /** Concrete model for a tier, honouring `ORDITO_CLAUDE_MODEL_<TIER>`. */
+  /** Concrete model for a tier, honouring `THEMIS_CLAUDE_MODEL_<TIER>`. */
   model(tier: ModelTier): string {
-    const override = this.#env[`ORDITO_CLAUDE_MODEL_${tier.toUpperCase()}`];
+    const override = this.#env[`THEMIS_CLAUDE_MODEL_${tier.toUpperCase()}`];
     return override !== undefined && override !== "" ? override : DEFAULT_MODELS[tier];
   }
 

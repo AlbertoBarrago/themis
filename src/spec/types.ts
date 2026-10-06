@@ -28,7 +28,7 @@ export type Models = Record<AgentRole, ModelTier>;
 
 /** Frontmatter with defaults applied. */
 export interface Frontmatter {
-  ordito: typeof FORMAT_VERSION;
+  themis: typeof FORMAT_VERSION;
   stack: Stack;
   verify: VerifyStep[];
   limits: Limits;

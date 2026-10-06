@@ -5,16 +5,16 @@ import { formatDiagnostic, hasErrors } from "../../spec/diagnostics.js";
 import { parseSpec } from "../../spec/parse.js";
 import { type CliIo, ExitCode } from "../io.js";
 
-export const CHECK_HELP = `Usage: ordito check [spec] [--json]
+export const CHECK_HELP = `Usage: themis check [spec] [--json]
 
-Validates a spec file against the Ordito format (default: spec.md).
+Validates a spec file against the Themis format (default: spec.md).
 
 Options:
   --json    Print diagnostics as JSON
   -h, --help
 `;
 
-/** `ordito check`: parse and validate a spec, printing every diagnostic. */
+/** `themis check`: parse and validate a spec, printing every diagnostic. */
 export async function check(args: string[], io: CliIo): Promise<ExitCode> {
   const { values, positionals } = parseArgs({
     args,
@@ -29,7 +29,7 @@ export async function check(args: string[], io: CliIo): Promise<ExitCode> {
     return ExitCode.Ok;
   }
   if (positionals.length > 1) {
-    io.stderr(`ordito check: expected at most one spec path\n\n${CHECK_HELP}`);
+    io.stderr(`themis check: expected at most one spec path\n\n${CHECK_HELP}`);
     return ExitCode.Usage;
   }
 
@@ -42,7 +42,7 @@ export async function check(args: string[], io: CliIo): Promise<ExitCode> {
     source = await readFile(path, "utf8");
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
-    io.stderr(`ordito check: cannot read ${display}: ${reason}\n`);
+    io.stderr(`themis check: cannot read ${display}: ${reason}\n`);
     return ExitCode.Usage;
   }
 

@@ -14,7 +14,7 @@ export interface AgentInvocation {
   tier: ModelTier;
   /** Project (or worktree) root the agent works in. */
   cwd: string;
-  /** Role instructions, from `.ordito/agents/<role>.md`. */
+  /** Role instructions, from `.themis/agents/<role>.md`. */
   instructions: string;
   prompt: string;
   tools: ToolAccess;

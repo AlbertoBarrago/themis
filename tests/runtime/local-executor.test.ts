@@ -26,10 +26,10 @@ describe("LocalExecutor", () => {
       command: node,
       args: [
         "-e",
-        "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(s, process.env.ORDITO_X, process.cwd()))",
+        "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(s, process.env.THEMIS_X, process.cwd()))",
       ],
       cwd: "/",
-      env: { ORDITO_X: "y" },
+      env: { THEMIS_X: "y" },
       stdin: "hello",
     });
     expect(result.stdout).toBe("hello y /\n");
@@ -49,10 +49,10 @@ describe("LocalExecutor", () => {
 
   it("rejects with a not-found ExecError for a missing command", async () => {
     await expect(
-      executor.exec({ command: "ordito-definitely-missing", args: [], cwd: process.cwd() }),
+      executor.exec({ command: "themis-definitely-missing", args: [], cwd: process.cwd() }),
     ).rejects.toMatchObject({ name: "ExecError", kind: "not-found" });
     await expect(
-      executor.exec({ command: "ordito-definitely-missing", args: [], cwd: process.cwd() }),
+      executor.exec({ command: "themis-definitely-missing", args: [], cwd: process.cwd() }),
     ).rejects.toBeInstanceOf(ExecError);
   });
 

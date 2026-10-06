@@ -9,11 +9,11 @@ import { formatDiagnostic } from "../../spec/diagnostics.js";
 import { type CliIo, ExitCode } from "../io.js";
 import { formatPlan } from "./plan.js";
 
-export const APPROVE_HELP = `Usage: ordito approve <gate> [--force]
+export const APPROVE_HELP = `Usage: themis approve <gate> [--force]
 
 Human approval gates:
-  plan    Approve the draft .ordito/tasks.json produced by ordito plan
-  tests   Approve tests/acceptance/ and lock the contract (.ordito/lock.json)
+  plan    Approve the draft .themis/tasks.json produced by themis plan
+  tests   Approve tests/acceptance/ and lock the contract (.themis/lock.json)
 
 Options:
   --force           Approve despite blocking questions
@@ -41,7 +41,7 @@ export async function approveCommand(
   const [gate, ...extra] = positionals;
   if ((gate !== "plan" && gate !== "tests") || extra.length > 0) {
     io.stderr(
-      `ordito approve: expected a gate${gate === undefined ? "" : `, got "${positionals.join(" ")}"`}\n\n${APPROVE_HELP}`,
+      `themis approve: expected a gate${gate === undefined ? "" : `, got "${positionals.join(" ")}"`}\n\n${APPROVE_HELP}`,
     );
     return ExitCode.Usage;
   }
@@ -51,7 +51,7 @@ export async function approveCommand(
       : await approveTestsGate(io, values.force, values.agent, executor);
   } catch (err) {
     if (err instanceof TasksFileError || err instanceof TestsFileError) {
-      io.stderr(`ordito approve ${gate}: ${err.message}\n`);
+      io.stderr(`themis approve ${gate}: ${err.message}\n`);
       return ExitCode.Usage;
     }
     throw err;
@@ -61,28 +61,28 @@ export async function approveCommand(
 async function approvePlanGate(io: CliIo, force: boolean): Promise<ExitCode> {
   const outcome = await approvePlan(io.cwd, { force });
   const fail = (message: string, code: ExitCode) => {
-    io.stderr(`ordito approve plan: ${message}\n`);
+    io.stderr(`themis approve plan: ${message}\n`);
     return code;
   };
   switch (outcome.kind) {
     case "no-plan":
-      return fail("no plan to approve; run ordito plan first", ExitCode.Usage);
+      return fail("no plan to approve; run themis plan first", ExitCode.Usage);
     case "spec-unreadable":
       return fail(outcome.message, ExitCode.Usage);
     case "invalid-spec":
       for (const d of outcome.diagnostics) io.stdout(`${formatDiagnostic("spec", d)}\n`);
       return fail("the spec is invalid", ExitCode.Invalid);
     case "spec-changed":
-      return fail("the spec changed since the plan was made; re-run ordito plan", ExitCode.Invalid);
+      return fail("the spec changed since the plan was made; re-run themis plan", ExitCode.Invalid);
     case "blocked":
-      return fail(blockedMessage(outcome.tasks.questions, "ordito plan"), ExitCode.Invalid);
+      return fail(blockedMessage(outcome.tasks.questions, "themis plan"), ExitCode.Invalid);
     case "already-approved":
       io.stdout("plan already approved\n");
       return ExitCode.Ok;
     case "approved":
       io.stdout(formatPlan(outcome.tasks));
       warnForced(io, outcome.tasks.questions);
-      io.stdout("plan approved; next: ordito tests\n");
+      io.stdout("plan approved; next: themis tests\n");
       return ExitCode.Ok;
   }
 }
@@ -95,7 +95,7 @@ async function approveTestsGate(
 ): Promise<ExitCode> {
   const guards = guardInstallerFor(agent);
   if (guards === undefined) {
-    io.stderr(`ordito approve tests: unknown agent "${agent}"\n`);
+    io.stderr(`themis approve tests: unknown agent "${agent}"\n`);
     return ExitCode.Usage;
   }
   const outcome = await approveTests({
@@ -105,22 +105,22 @@ async function approveTestsGate(
     force,
   });
   const fail = (message: string, code: ExitCode) => {
-    io.stderr(`ordito approve tests: ${message}\n`);
+    io.stderr(`themis approve tests: ${message}\n`);
     return code;
   };
   switch (outcome.kind) {
     case "no-tests":
-      return fail("no acceptance tests to approve; run ordito tests first", ExitCode.Usage);
+      return fail("no acceptance tests to approve; run themis tests first", ExitCode.Usage);
     case "spec-unreadable":
       return fail(outcome.message, ExitCode.Usage);
     case "invalid-spec":
       for (const d of outcome.diagnostics) io.stdout(`${formatDiagnostic("spec", d)}\n`);
       return fail("the spec is invalid", ExitCode.Invalid);
     case "plan-not-approved":
-      return fail("the plan is not approved; run ordito approve plan first", ExitCode.Usage);
+      return fail("the plan is not approved; run themis approve plan first", ExitCode.Usage);
     case "spec-changed":
       return fail(
-        "the spec changed since the tests were written; re-run ordito plan and ordito tests --force",
+        "the spec changed since the tests were written; re-run themis plan and themis tests --force",
         ExitCode.Invalid,
       );
     case "invalid-tests":
@@ -130,11 +130,11 @@ async function approveTestsGate(
       );
     case "blocked":
       return fail(
-        blockedMessage(outcome.state.questions, "ordito tests --force"),
+        blockedMessage(outcome.state.questions, "themis tests --force"),
         ExitCode.Invalid,
       );
     case "missing-contract-file":
-      return fail(`${outcome.path} is missing; run ordito init`, ExitCode.Usage);
+      return fail(`${outcome.path} is missing; run themis init`, ExitCode.Usage);
     case "already-approved":
       io.stdout("tests already approved and locked\n");
       return ExitCode.Ok;
@@ -142,10 +142,10 @@ async function approveTestsGate(
       const files = Object.keys(outcome.lock.files);
       warnForced(io, outcome.state.questions);
       io.stdout(
-        `contract locked: ${files.length} files in .ordito/lock.json` +
+        `contract locked: ${files.length} files in .themis/lock.json` +
           `${outcome.lock.base === null ? " (no git commit: markers are checked on every file)" : ` (base ${outcome.lock.base.slice(0, 12)})`}\n` +
           files.map((f) => `  ${f}\n`).join("") +
-          "next: ordito run\n",
+          "next: themis run\n",
       );
       return ExitCode.Ok;
     }

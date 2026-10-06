@@ -9,10 +9,10 @@ import { LocalExecutor } from "../../runtime/local-executor.js";
 import { formatDiagnostic } from "../../spec/diagnostics.js";
 import { type CliIo, ExitCode } from "../io.js";
 
-export const PLAN_HELP = `Usage: ordito plan [--spec <path>] [--agent <name>] [--force]
+export const PLAN_HELP = `Usage: themis plan [--spec <path>] [--agent <name>] [--force]
 
 Asks the planner agent for a task graph, validates it against the spec and writes a draft
-.ordito/tasks.json. Review it, then run: ordito approve plan
+.themis/tasks.json. Review it, then run: themis approve plan
 
 Options:
   --spec <path>     Spec file (default: spec.md)
@@ -41,13 +41,13 @@ export async function planCommand(
     return ExitCode.Ok;
   }
   if (positionals.length > 0) {
-    io.stderr(`ordito plan: unexpected argument "${positionals[0]}"\n\n${PLAN_HELP}`);
+    io.stderr(`themis plan: unexpected argument "${positionals[0]}"\n\n${PLAN_HELP}`);
     return ExitCode.Usage;
   }
   const runner = runnerFor(values.agent, executor);
   if (runner === undefined) {
     io.stderr(
-      `ordito plan: unknown agent "${values.agent}" (available: ${availableAgents().join(", ")})\n`,
+      `themis plan: unknown agent "${values.agent}" (available: ${availableAgents().join(", ")})\n`,
     );
     return ExitCode.Usage;
   }
@@ -59,7 +59,7 @@ export async function planCommand(
     outcome = await plan({ root: io.cwd, specPath, force: values.force, runner });
   } catch (err) {
     if (err instanceof TasksFileError) {
-      io.stderr(`ordito plan: ${err.message}\n`);
+      io.stderr(`themis plan: ${err.message}\n`);
       return ExitCode.Usage;
     }
     throw err;
@@ -68,29 +68,29 @@ export async function planCommand(
   switch (outcome.kind) {
     case "not-initialized":
     case "spec-unreadable":
-      io.stderr(`ordito plan: ${outcome.message}\n`);
+      io.stderr(`themis plan: ${outcome.message}\n`);
       return ExitCode.Usage;
     case "invalid-spec":
       for (const d of outcome.diagnostics) io.stdout(`${formatDiagnostic(specPath, d)}\n`);
-      io.stderr(`ordito plan: ${specPath} is invalid, fix it first (ordito check)\n`);
+      io.stderr(`themis plan: ${specPath} is invalid, fix it first (themis check)\n`);
       return ExitCode.Invalid;
     case "already-approved":
-      io.stderr("ordito plan: the plan is already approved; use --force to replan\n");
+      io.stderr("themis plan: the plan is already approved; use --force to replan\n");
       return ExitCode.Usage;
     case "agent-unavailable":
       io.stderr(
-        `ordito plan: agent unavailable: ${outcome.message}\n${formatTotals("planner", outcome.totals)}`,
+        `themis plan: agent unavailable: ${outcome.message}\n${formatTotals("planner", outcome.totals)}`,
       );
       return ExitCode.Usage;
     case "agent-failed":
       io.stderr(
-        `ordito plan: the planner failed: ${outcome.message}\n${formatTotals("planner", outcome.totals)}`,
+        `themis plan: the planner failed: ${outcome.message}\n${formatTotals("planner", outcome.totals)}`,
       );
       return ExitCode.Usage;
     case "invalid-plan":
       io.stderr(
-        `ordito plan: no valid plan after ${outcome.totals.attempts} attempts:\n${outcome.errors.map((e) => `  - ${e}\n`).join("")}` +
-          `Consider making the spec more explicit. Planner logs: .ordito/runs/plan/\n${formatTotals("planner", outcome.totals)}`,
+        `themis plan: no valid plan after ${outcome.totals.attempts} attempts:\n${outcome.errors.map((e) => `  - ${e}\n`).join("")}` +
+          `Consider making the spec more explicit. Planner logs: .themis/runs/plan/\n${formatTotals("planner", outcome.totals)}`,
       );
       return ExitCode.Invalid;
     case "done":
@@ -98,8 +98,8 @@ export async function planCommand(
       io.stdout(formatTotals("planner", outcome.totals));
       io.stdout(
         outcome.tasks.questions.some((q) => q.severity === "blocking")
-          ? "draft written to .ordito/tasks.json; resolve the blocking questions in the spec, then re-run ordito plan\n"
-          : "draft written to .ordito/tasks.json; review it, then run: ordito approve plan\n",
+          ? "draft written to .themis/tasks.json; resolve the blocking questions in the spec, then re-run themis plan\n"
+          : "draft written to .themis/tasks.json; review it, then run: themis approve plan\n",
       );
       return ExitCode.Ok;
   }

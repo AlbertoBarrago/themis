@@ -30,9 +30,9 @@ export type PlannedTask = z.infer<typeof plannedTask>;
 /** JSON Schema sent with the planner call (see {@link toAgentJsonSchema}). */
 export const plannerOutputJsonSchema = toAgentJsonSchema(plannerOutput);
 
-/** `.ordito/tasks.json`, see ADR 0010. */
+/** `.themis/tasks.json`, see ADR 0010. */
 export const tasksFile = z.strictObject({
-  ordito: z.literal("0.1"),
+  themis: z.literal("0.1"),
   spec: z.string(),
   specDigest: z.string().regex(/^[0-9a-f]{64}$/),
   status: z.enum(["draft", "approved"]),
@@ -43,4 +43,4 @@ export const tasksFile = z.strictObject({
 });
 export type TasksFile = z.output<typeof tasksFile>;
 
-export const TASKS_PATH = ".ordito/tasks.json";
+export const TASKS_PATH = ".themis/tasks.json";

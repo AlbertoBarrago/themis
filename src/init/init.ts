@@ -10,8 +10,8 @@ import { detectNodeTs } from "../stack/node-ts/detect.js";
 import {
   type GeneratedFile,
   gitignoreEntries,
-  orditoFiles,
   scaffoldFiles,
+  themisFiles,
 } from "../stack/node-ts/files.js";
 
 export interface InitOptions {
@@ -47,10 +47,10 @@ export type InstallOutcome =
   | { kind: "failed"; message: string };
 
 const INSTALL_TIMEOUT_MS = 10 * 60 * 1000;
-const GITIGNORE_HEADER = "# Ordito";
+const GITIGNORE_HEADER = "# Themis";
 
 /**
- * `ordito init` for the node-ts stack: validates the spec, scaffolds an empty directory or
+ * `themis init` for the node-ts stack: validates the spec, scaffolds an empty directory or
  * checks an existing project, then writes the verifier, guard, agent roles and protections.
  *
  * Nothing is written before the spec and the project have been validated, and agent
@@ -92,7 +92,7 @@ export async function init(options: InitOptions): Promise<InitOutcome> {
 
   const files: GeneratedFile[] = [
     ...(scaffolded ? await scaffoldFiles(root) : []),
-    ...(await orditoFiles(spec.frontmatter)),
+    ...(await themisFiles(spec.frontmatter)),
   ];
   for (const file of files) {
     const writeOptions = file.mode === undefined ? { force } : { force, mode: file.mode };
@@ -104,7 +104,7 @@ export async function init(options: InitOptions): Promise<InitOutcome> {
     .filter((c) => c.status === "skipped")
     .map((c) => `${c.path} was not updated: ${c.reason ?? "skipped"}`);
   if (!(await isGitRepository(options.executor, root))) {
-    warnings.push("not a git repository: `ordito run` needs git for worktrees and the guard diff");
+    warnings.push("not a git repository: `themis run` needs git for worktrees and the guard diff");
   }
 
   const needsInstall = scaffolded || (detection.kind === "node-ts" && !detection.hasNodeModules);
@@ -116,7 +116,7 @@ export async function init(options: InitOptions): Promise<InitOutcome> {
   return { kind: "done", scaffolded, changes, diagnostics, warnings, install };
 }
 
-/** Appends missing entries under an `# Ordito` header, never reordering existing lines. */
+/** Appends missing entries under an `# Themis` header, never reordering existing lines. */
 async function mergeGitignore(root: string, entries: string[]): Promise<FileChange> {
   const path = ".gitignore";
   const existing = await readIfExists(join(root, path));

@@ -6,12 +6,12 @@ import { planCommand } from "./commands/plan.js";
 import { testsCommand } from "./commands/tests.js";
 import { type CliIo, ExitCode } from "./io.js";
 
-const HELP = `Usage: ordito <command> [options]
+const HELP = `Usage: themis <command> [options]
 
 Commands:
   check [spec]   Validate a spec file (default: spec.md)
   init           Prepare the project: verifier, guard, agent roles, protections
-  plan           Ask the planner for a task graph (draft .ordito/tasks.json)
+  plan           Ask the planner for a task graph (draft .themis/tasks.json)
   approve plan   Approve the draft plan (human gate)
   tests          Ask the test author for acceptance tests (draft tests/acceptance/)
   approve tests  Approve the tests and lock the contract (human gate)
@@ -44,7 +44,7 @@ export async function runCli(argv: string[], io: CliIo): Promise<ExitCode> {
   }
   const command = COMMANDS[name];
   if (command === undefined) {
-    io.stderr(`ordito: unknown command "${name}"\n\n${HELP}`);
+    io.stderr(`themis: unknown command "${name}"\n\n${HELP}`);
     return ExitCode.Usage;
   }
   try {
@@ -56,7 +56,7 @@ export async function runCli(argv: string[], io: CliIo): Promise<ExitCode> {
       "code" in err &&
       String(err.code).startsWith("ERR_PARSE_ARGS")
     ) {
-      io.stderr(`ordito ${name}: ${err.message}\n`);
+      io.stderr(`themis ${name}: ${err.message}\n`);
       return ExitCode.Usage;
     }
     throw err;

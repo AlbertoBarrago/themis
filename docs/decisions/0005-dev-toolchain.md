@@ -4,7 +4,7 @@ Status: accepted (2026-10-06)
 
 ## Context
 
-These are development dependencies of Ordito itself, not of the projects Ordito generates.
+These are development dependencies of Themis itself, not of the projects Themis generates.
 
 ## Decision
 
@@ -15,5 +15,5 @@ These are development dependencies of Ordito itself, not of the projects Ordito 
 
 ## Consequences
 
-- `npm run check` runs typecheck, lint and tests; it is the local verifier for Ordito.
+- `npm run check` runs typecheck, lint and tests; it is the local verifier for Themis.
 - The linter used by generated `node-ts` projects is a separate decision, taken in M1.

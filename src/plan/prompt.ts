@@ -3,7 +3,7 @@ import { rejectionSection } from "../agents/structured.js";
 import { SETUP_TASK } from "./schema.js";
 
 /**
- * The planner's user prompt. Role behaviour lives in `.ordito/agents/planner.md`; this prompt
+ * The planner's user prompt. Role behaviour lives in `.themis/agents/planner.md`; this prompt
  * carries the spec and the machine-checked rules, so a customised role file cannot silently
  * drop them.
  */
@@ -13,7 +13,7 @@ export function plannerPrompt(
   rejected: readonly string[],
 ): string {
   const parts = [
-    `Plan the implementation of the Ordito spec below (${specPath}).`,
+    `Plan the implementation of the Themis spec below (${specPath}).`,
     "",
     "<spec>",
     specSource.trimEnd(),

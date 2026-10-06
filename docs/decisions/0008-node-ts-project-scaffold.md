@@ -4,7 +4,7 @@ Status: accepted (2026-10-06)
 
 ## Context
 
-The MVP success criterion starts from an empty folder, so `ordito init` must create a project
+The MVP success criterion starts from an empty folder, so `themis init` must create a project
 when none exists. Existing projects must not be rewritten.
 
 ## Decision
@@ -13,7 +13,7 @@ when none exists. Existing projects must not be rewritten.
 - No `package.json`: scaffold a minimal project: `package.json` (ESM, private, scripts
   `typecheck`, `lint`, `test`), `tsconfig.json` (strict), `biome.json`, `vitest.config.ts`,
   `.gitignore` entries. Dev dependencies: `typescript`, `vitest`, `@types/node`,
-  `@biomejs/biome`, at the versions Ordito itself uses. Linter for generated projects: Biome.
+  `@biomejs/biome`, at the versions Themis itself uses. Linter for generated projects: Biome.
 - `package.json` present: detect only. Missing `typescript`, `vitest`, `tsconfig.json`, or
   `@biomejs/biome` when `lint` is enabled exits `2` with the list; nothing is written.
 - `vitest.config.ts` (locked) wires `tests/acceptance/global-setup.ts` as `globalSetup` only if
@@ -29,4 +29,4 @@ when none exists. Existing projects must not be rewritten.
 ## Consequences
 
 - Support for existing projects is limited to ones already shaped like the scaffold.
-- Dependency versions in the scaffold must be bumped together with Ordito's own.
+- Dependency versions in the scaffold must be bumped together with Themis's own.

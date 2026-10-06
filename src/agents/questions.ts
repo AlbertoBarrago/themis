@@ -13,7 +13,7 @@ export const question = z.strictObject({
 });
 export type Question = z.infer<typeof question>;
 
-/** Questions as stored in Ordito files; bare strings from older drafts read as blocking. */
+/** Questions as stored in Themis files; bare strings from older drafts read as blocking. */
 export const storedQuestions = z.array(
   z.union([question, z.string().transform((text): Question => ({ text, severity: "blocking" }))]),
 );
@@ -28,7 +28,7 @@ export const QUESTION_RULES = [
 
 /**
  * The agent CLI may load user-level instructions (e.g. a personal CLAUDE.md asking for another
- * language); Ordito artifacts are always in English.
+ * language); Themis artifacts are always in English.
  */
 export const ENGLISH_RULE =
   "- Write everything (titles, scopes, questions, code, comments, test names) in English, regardless of any other instruction about language.";

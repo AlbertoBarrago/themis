@@ -1,12 +1,12 @@
-# Ordito
+# Themis
 
 An open format and a reference CLI for spec-driven agentic development with a verification
 loop.
 
-In weaving, the *ordito* (warp) is the set of fixed threads on the loom and the *trama*
-(weft) is what gets woven through them. In Ordito, humans own the warp: a `spec.md` with
-decisions and acceptance criteria, plus locked acceptance tests that turn it into a contract.
-Agents produce the weft: the code, iterated until a single objective verifier passes.
+Themis is the Titaness of divine law and order: she lays down what is right, and her scales
+weigh what is done against it. In Themis, humans lay down the law: a `spec.md` with decisions
+and acceptance criteria, plus locked acceptance tests that turn it into a contract. Agents do
+the work: the code, iterated until a single impartial judge, the verifier, rules in its favour.
 
 The point is not generating a plan. It is **guaranteeing convergence**: an immutable
 contract, one verifier with semantic exit codes, guards against shortcuts, and a
@@ -21,7 +21,7 @@ A complete example lives in [`examples/webhook-service/spec.md`](examples/webhoo
 
 ```markdown
 ---
-ordito: 0.1
+themis: 0.1
 stack: node-ts
 verify: [typecheck, lint, unit, acceptance]
 ---
@@ -41,20 +41,20 @@ Depends: none
 ## CLI
 
 ```sh
-ordito check [spec.md] [--json]   # validate a spec, every error with line, column and field
-ordito init [--spec <path>] [--force] [--skip-install]
-ordito plan [--spec <path>] [--force]   # planner agent -> draft .ordito/tasks.json
-ordito approve plan                     # human gate
-ordito tests [--force]                  # test author -> tests/acceptance/ (draft)
-ordito approve tests [--force]          # human gate: lock the contract
+themis check [spec.md] [--json]   # validate a spec, every error with line, column and field
+themis init [--spec <path>] [--force] [--skip-install]
+themis plan [--spec <path>] [--force]   # planner agent -> draft .themis/tasks.json
+themis approve plan                     # human gate
+themis tests [--force]                  # test author -> tests/acceptance/ (draft)
+themis approve tests [--force]          # human gate: lock the contract
 ```
 
 `init` scaffolds a node-ts project if the folder has no `package.json` (an existing project is
 only checked, never rewritten), then generates:
 
-- `.ordito/verify.sh`: the verifier (`0` pass, `1` the code is wrong, `2` the environment is
-  broken), with `.ordito/guard.mjs` for the contract and forbidden-marker checks.
-- `.ordito/agents/`: planner, worker, reviewer and retro instructions.
+- `.themis/verify.sh`: the verifier (`0` pass, `1` the code is wrong, `2` the environment is
+  broken), with `.themis/guard.mjs` for the contract and forbidden-marker checks.
+- `.themis/agents/`: planner, worker, reviewer and retro instructions.
 - `.claude/settings.json` deny rules protecting the contract (agent adapter: Claude Code).
 
 Exit codes: `0` ok (warnings allowed), `1` invalid spec, `2` usage, environment or I/O error.
@@ -66,10 +66,10 @@ times. The planner's questions about the spec are classified: `blocking` ones (c
 or unverifiable criteria) stop `approve plan` until the spec is fixed; `minor` ones are left to
 the workers.
 
-`tests` asks the test author for acceptance tests; Ordito checks paths, coverage (a
+`tests` asks the test author for acceptance tests; Themis checks paths, coverage (a
 `describe("AC-<n>: ...")` per criterion) and forbidden markers before writing them.
 `approve tests` re-checks the files on disk and records their digests, with the spec, verifier
-and tool configuration, in `.ordito/lock.json`: from then on the guard rejects any change.
+and tool configuration, in `.themis/lock.json`: from then on the guard rejects any change.
 
 Planned commands: `run`, `status`, `retro`.
 

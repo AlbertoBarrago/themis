@@ -1,11 +1,11 @@
 {
-  "name": "ordito",
+  "name": "themis-spec",
   "version": "0.0.0",
   "description": "Open format and reference CLI for spec-driven agentic development with a verification loop",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "ordito": "./dist/cli/main.js"
+    "themis": "./dist/cli/main.js"
   },
   "files": [
     "dist",

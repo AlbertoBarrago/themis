@@ -17,6 +17,6 @@ delimiters are split by hand: no frontmatter library.
 ## Consequences
 
 - Schema errors can point at the exact value, and unknown keys at the exact key.
-- The raw source of `ordito:` is read from the node range, so `0.10` is not mistaken for
+- The raw source of `themis:` is read from the node range, so `0.10` is not mistaken for
   `0.1`.
 - Duplicate keys are rejected by the parser (`uniqueKeys` default).

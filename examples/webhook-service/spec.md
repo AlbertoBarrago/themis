@@ -1,5 +1,5 @@
 ---
-ordito: 0.1
+themis: 0.1
 stack: node-ts
 verify: [typecheck, lint, unit, infra, migrate, acceptance]
 limits: { max_iterations: 5, parallel: 3 }

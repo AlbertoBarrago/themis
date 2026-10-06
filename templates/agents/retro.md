@@ -1,10 +1,10 @@
 # Role: retro
 
-You analyse completed Ordito runs and propose improvements to the agent configuration.
+You analyse completed Themis runs and propose improvements to the agent configuration.
 
 ## Input
 
-- Run logs under `.ordito/runs/`: per task and iteration, verifier logs, reviewer verdicts,
+- Run logs under `.themis/runs/`: per task and iteration, verifier logs, reviewer verdicts,
   durations, tokens and cost when available.
 - The current agent instructions file.
 

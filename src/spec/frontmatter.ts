@@ -3,7 +3,7 @@ import { z } from "zod";
 import { type Diagnostic, error } from "./diagnostics.js";
 import { FORMAT_VERSION, type Frontmatter, MODEL_TIERS, STACKS, VERIFY_STEPS } from "./types.js";
 
-const KNOWN_KEYS = new Set(["ordito", "stack", "verify", "limits", "models"]);
+const KNOWN_KEYS = new Set(["themis", "stack", "verify", "limits", "models"]);
 const EXTENSION_PREFIX = "x-";
 
 const DEFAULT_LIMITS = { max_iterations: 5, parallel: 3 };
@@ -17,7 +17,7 @@ const DEFAULT_MODELS = {
 const tier = z.enum(MODEL_TIERS);
 
 /**
- * Schema for every known key except `ordito`, which is checked against its raw source text
+ * Schema for every known key except `themis`, which is checked against its raw source text
  * (see {@link checkVersion}) because YAML would read `0.10` and `0.1` as the same number.
  */
 const schema = z.object({
@@ -133,9 +133,9 @@ class FrontmatterContext {
   }
 
   #checkVersion(): void {
-    const node = this.#doc.get("ordito", true);
+    const node = this.#doc.get("themis", true);
     if (node === undefined) {
-      this.#diagnostics.push(error("invalid-field", "is required", 1, 1, "ordito"));
+      this.#diagnostics.push(error("invalid-field", "is required", 1, 1, "themis"));
       return;
     }
     const raw = isScalar(node) && node.range ? this.#raw(node) : undefined;
@@ -147,7 +147,7 @@ class FrontmatterContext {
           `unsupported format version ${raw === undefined ? "(not a scalar)" : `"${raw}"`}, expected "${FORMAT_VERSION}"`,
           line,
           column,
-          "ordito",
+          "themis",
         ),
       );
     }
@@ -169,7 +169,7 @@ class FrontmatterContext {
         this.#diagnostics.push(error("unknown-field", "keys must be scalars", line, column));
         continue;
       }
-      if (key === "ordito") continue;
+      if (key === "themis") continue;
       if (key.startsWith(EXTENSION_PREFIX)) {
         extensions[key] = values[key];
       } else if (KNOWN_KEYS.has(key)) {
@@ -191,7 +191,7 @@ class FrontmatterContext {
   }): void {
     const parsed = schema.safeParse(known, { reportInput: true });
     if (parsed.success) {
-      this.frontmatter = { ordito: FORMAT_VERSION, ...parsed.data, extensions };
+      this.frontmatter = { themis: FORMAT_VERSION, ...parsed.data, extensions };
       return;
     }
     for (const issue of parsed.error.issues) {

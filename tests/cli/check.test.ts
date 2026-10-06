@@ -24,10 +24,10 @@ async function run(...argv: string[]) {
 }
 
 beforeEach(async () => {
-  cwd = await mkdtemp(join(tmpdir(), "ordito-check-"));
+  cwd = await mkdtemp(join(tmpdir(), "themis-check-"));
 });
 
-describe("ordito check", () => {
+describe("themis check", () => {
   it("exits 0 for a valid spec.md in the working directory", async () => {
     await writeFile(join(cwd, "spec.md"), lines(...VALID_FRONTMATTER, ...VALID_BODY));
     expect(await run("check")).toBe(0);
@@ -37,7 +37,7 @@ describe("ordito check", () => {
   it("exits 1 and prints located diagnostics for an invalid spec", async () => {
     await writeFile(
       join(cwd, "feature.md"),
-      lines("---", "ordito: 0.1", "stack: rust", "verify: [acceptance]", "---", ...VALID_BODY),
+      lines("---", "themis: 0.1", "stack: rust", "verify: [acceptance]", "---", ...VALID_BODY),
     );
     expect(await run("check", "feature.md")).toBe(1);
     expect(out).toBe(

@@ -28,7 +28,7 @@ import {
 } from "./schema.js";
 import { validateTestFiles } from "./validate.js";
 
-export const TEST_AUTHOR_INSTRUCTIONS = ".ordito/agents/test-author.md";
+export const TEST_AUTHOR_INSTRUCTIONS = ".themis/agents/test-author.md";
 
 /**
  * The test author returns every file in one structured answer: on the webhook example (6
@@ -36,7 +36,7 @@ export const TEST_AUTHOR_INSTRUCTIONS = ".ordito/agents/test-author.md";
  */
 const TEST_AUTHOR_TIMEOUT_MS = 45 * 60 * 1000;
 
-/** A `.ordito/tests.json` that exists but cannot be used; never silently replaced. */
+/** A `.themis/tests.json` that exists but cannot be used; never silently replaced. */
 export class TestsFileError extends Error {
   override readonly name = "TestsFileError";
 }
@@ -68,7 +68,7 @@ export interface GenerateOptions {
 }
 
 /**
- * `ordito tests`: asks the test-author agent for acceptance tests, validates them and writes
+ * `themis tests`: asks the test-author agent for acceptance tests, validates them and writes
  * them under `tests/acceptance/` as a draft for the human gate (ADR 0011). Existing tests and
  * the lock are only removed with `force`, and only after a valid answer came back.
  */
@@ -80,7 +80,7 @@ export async function generateTests(options: GenerateOptions): Promise<GenerateO
   if (instructions === undefined) {
     return {
       kind: "not-initialized",
-      message: `${TEST_AUTHOR_INSTRUCTIONS} not found; run ordito init first (or ordito init again after upgrading)`,
+      message: `${TEST_AUTHOR_INSTRUCTIONS} not found; run themis init first (or themis init again after upgrading)`,
     };
   }
   const loaded = await loadSpec(root, specPath);
@@ -144,7 +144,7 @@ export async function generateTests(options: GenerateOptions): Promise<GenerateO
     await writeFile(join(root, file.path), file.content);
   }
   const state: TestsFile = {
-    ordito: "0.1",
+    themis: "0.1",
     spec: specPath,
     specDigest: digest,
     status: "draft",
@@ -178,7 +178,7 @@ export interface ApproveTestsOptions {
 }
 
 /**
- * `ordito approve tests`: the gate that turns the tests into the contract. Re-validates the
+ * `themis approve tests`: the gate that turns the tests into the contract. Re-validates the
  * files on disk (the human may have edited them), then records the digests in `lock.json`.
  */
 export async function approveTests(options: ApproveTestsOptions): Promise<ApproveTestsOutcome> {
@@ -218,7 +218,7 @@ export async function approveTests(options: ApproveTestsOptions): Promise<Approv
   }
 
   const lock: LockFile = {
-    ordito: "0.1",
+    themis: "0.1",
     lockedAt: now().toISOString(),
     base: await headCommit(options.executor, root),
     dirs: [ACCEPTANCE_DIR],

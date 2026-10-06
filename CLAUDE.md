@@ -4,8 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Ordito is an open format (`SPEC_FORMAT.md`, version `0.1`) plus a reference CLI (npm package
-`ordito`) for spec-driven agentic development with a verification loop. Humans own the spec
+(Formerly "Ordito"; renamed to Themis, see ADR 0012. The npm package is provisionally
+`themis-spec`, the binary is `themis`.)
+
+Themis is an open format (`SPEC_FORMAT.md`, version `0.1`) plus a reference CLI (npm package
+`themis`) for spec-driven agentic development with a verification loop. Humans own the spec
 and the locked acceptance tests; agents produce code until a single verifier passes.
 
 `SPEC_FORMAT.md` is normative and must stay usable without the CLI. When parser behavior
@@ -32,7 +35,7 @@ npm run build && node dist/cli/main.js check examples/webhook-service/spec.md
   first one. The body is analysed even when the frontmatter is invalid. `spec` is returned only
   when there are no errors (warnings allowed).
 - `frontmatter.ts`: YAML via the `yaml` document model so every node keeps a source range;
-  zod issue paths are resolved back to line/column. `ordito:` is checked against its raw source
+  zod issue paths are resolved back to line/column. `themis:` is checked against its raw source
   text (so `0.10` is not `0.1`). Unknown top-level keys are checked by hand to allow `x-*`
   extensions; nested objects use `strictObject`. Error messages are rewritten in
   `describeIssue` so they do not depend on zod's wording.
@@ -45,15 +48,15 @@ npm run build && node dist/cli/main.js check examples/webhook-service/spec.md
 - CLI: `src/cli/run.ts` `runCli(argv, io)` dispatches commands and returns an exit code;
   `main.ts` is the only place touching `process`. Commands take an injected `CliIo` so tests run
   in-process. Arguments are parsed with `node:util` `parseArgs` (no CLI library).
-- `ordito init` (`src/init/init.ts`) validates everything before writing: spec, then project
+- `themis init` (`src/init/init.ts`) validates everything before writing: spec, then project
   detection (`src/stack/node-ts/detect.ts`), then agent guards, then generated files. Generated
   files go through `writeGenerated` (`src/fs/generated.ts`): identical content is left alone,
   different content is skipped unless `--force`.
 - `templates/` ships with the package and is read at runtime via `src/templates.ts`
-  (placeholders `__ORDITO_<KEY>__`). `templates/node-ts/verify.sh` and `guard.mjs` are the
+  (placeholders `__THEMIS_<KEY>__`). `templates/node-ts/verify.sh` and `guard.mjs` are the
   generated verifier; `guard.mjs` is plain JS type-checked through `checkJs`. Their behavior
   is specified in ADR 0007 and tested by running them for real (`tests/stack/`, with stub
-  binaries; `tests/e2e/` with the real toolchain via Ordito's own `node_modules`).
+  binaries; `tests/e2e/` with the real toolchain via Themis's own `node_modules`).
 - Process execution goes through `Executor` (`src/runtime/`); agent-specific code lives only
   in `src/adapters/<agent>/` and is reached through `src/adapters/registry.ts`.
 - Exit codes everywhere mirror the verifier contract: `0` ok, `1` fixable input/code problem,

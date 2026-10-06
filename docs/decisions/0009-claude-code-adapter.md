@@ -49,7 +49,7 @@ calls before writing the adapter. Findings below were observed with Claude Code 
 - Failure = non-zero exit, unparsable stdout, or `is_error: true`. The `result` text is
   surfaced as the error message.
 - Tiers map to aliases: `strong` = `opus`, `fast` = `sonnet`, overridable with
-  `ORDITO_CLAUDE_MODEL_STRONG` / `ORDITO_CLAUDE_MODEL_FAST`.
+  `THEMIS_CLAUDE_MODEL_STRONG` / `THEMIS_CLAUDE_MODEL_FAST`.
 - Usage recorded per call: duration, input/output/cache tokens, `total_cost_usd`, number of
   permission denials.
 
@@ -58,9 +58,9 @@ calls before writing the adapter. Findings below were observed with Claude Code 
 - The adapter depends on undocumented-but-observed JSON fields; parsing is defensive and a
   shape change yields an explicit adapter error, not a silent zero.
 - Re-verify these findings when bumping the supported Claude Code version.
-- Found in the first real `ordito plan` run: `claude -p` loads the user's global
+- Found in the first real `themis plan` run: `claude -p` loads the user's global
   `~/.claude/CLAUDE.md`, so personal instructions (output language, "wait for confirmation
-  before implementing", commit rules) reach Ordito's agents. Prompts therefore restate what
+  before implementing", commit rules) reach Themis's agents. Prompts therefore restate what
   must not be overridden (the planner prompt fixes English output). Before M4, find a way to
   isolate workers from user-level instructions, or document the requirement.
 - Also found: `--json-schema` rejects schemas declaring `"$schema": ".../draft/2020-12/schema"`

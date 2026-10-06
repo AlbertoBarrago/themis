@@ -12,7 +12,7 @@ let err: string;
 
 const SPEC = lines(
   "---",
-  "ordito: 0.1",
+  "themis: 0.1",
   "stack: node-ts",
   "verify: [typecheck, lint, unit, acceptance]",
   "---",
@@ -57,15 +57,15 @@ async function exists(path: string) {
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), "ordito-init-"));
+  root = await mkdtemp(join(tmpdir(), "themis-init-"));
 });
 
-describe("ordito init in an empty directory", () => {
+describe("themis init in an empty directory", () => {
   beforeEach(async () => {
     await writeFile(join(root, "spec.md"), SPEC);
   });
 
-  it("scaffolds the project, writes .ordito and installs dependencies", async () => {
+  it("scaffolds the project, writes .themis and installs dependencies", async () => {
     const executor = okExecutor();
     expect(await run(executor)).toBe(0);
     expect(err).toBe("");
@@ -77,21 +77,21 @@ describe("ordito init in an empty directory", () => {
       "vitest.config.ts",
       ".gitignore",
       ".claude/settings.json",
-      ".ordito/verify.sh",
-      ".ordito/guard.mjs",
-      ".ordito/agents/planner.md",
-      ".ordito/agents/test-author.md",
-      ".ordito/agents/worker.md",
-      ".ordito/agents/reviewer.md",
-      ".ordito/agents/retro.md",
+      ".themis/verify.sh",
+      ".themis/guard.mjs",
+      ".themis/agents/planner.md",
+      ".themis/agents/test-author.md",
+      ".themis/agents/worker.md",
+      ".themis/agents/reviewer.md",
+      ".themis/agents/retro.md",
     ]) {
       expect(await exists(path), path).toBe(true);
     }
     expect(out).toContain("scaffolded a new node-ts project");
-    expect(out).toContain("created   .ordito/verify.sh");
+    expect(out).toContain("created   .themis/verify.sh");
 
     const pkg = JSON.parse(await read("package.json"));
-    expect(pkg.name).toMatch(/^ordito-init-/);
+    expect(pkg.name).toMatch(/^themis-init-/);
     expect(pkg.type).toBe("module");
 
     expect(executor.requests.map((r) => [r.command, ...r.args])).toEqual([
@@ -102,10 +102,10 @@ describe("ordito init in an empty directory", () => {
 
   it("bakes the enabled steps into an executable verify.sh", async () => {
     await run(okExecutor());
-    const verify = await read(".ordito/verify.sh");
+    const verify = await read(".themis/verify.sh");
     expect(verify).toContain('STEPS="typecheck lint unit acceptance"');
-    expect(verify).not.toContain("__ORDITO_");
-    expect((await stat(join(root, ".ordito/verify.sh"))).mode & 0o111).not.toBe(0);
+    expect(verify).not.toContain("__THEMIS_");
+    expect((await stat(join(root, ".themis/verify.sh"))).mode & 0o111).not.toBe(0);
   });
 
   it("protects the contract in the agent settings", async () => {
@@ -113,7 +113,7 @@ describe("ordito init in an empty directory", () => {
     const settings = JSON.parse(await read(".claude/settings.json"));
     expect(settings.permissions.deny).toEqual([
       "Edit(/tests/acceptance/**)",
-      "Edit(/.ordito/**)",
+      "Edit(/.themis/**)",
       "Edit(/spec.md)",
       "Edit(/tsconfig.json)",
       "Edit(/biome.json)",
@@ -126,20 +126,20 @@ describe("ordito init in an empty directory", () => {
     await run(okExecutor());
     expect(await run(okExecutor(), "--skip-install")).toBe(0);
     expect(out).not.toMatch(/^(created|updated|skipped)/m);
-    expect(out).toContain("unchanged .ordito/verify.sh");
+    expect(out).toContain("unchanged .themis/verify.sh");
   });
 
   it("skips locally modified files unless --force", async () => {
     await run(okExecutor());
-    await writeFile(join(root, ".ordito/verify.sh"), "#!/bin/sh\nexit 0\n");
+    await writeFile(join(root, ".themis/verify.sh"), "#!/bin/sh\nexit 0\n");
     expect(await run(okExecutor())).toBe(0);
-    expect(out).toContain("skipped   .ordito/verify.sh");
-    expect(err).toContain("warning: .ordito/verify.sh was not updated");
-    expect(await read(".ordito/verify.sh")).toBe("#!/bin/sh\nexit 0\n");
+    expect(out).toContain("skipped   .themis/verify.sh");
+    expect(err).toContain("warning: .themis/verify.sh was not updated");
+    expect(await read(".themis/verify.sh")).toBe("#!/bin/sh\nexit 0\n");
 
     expect(await run(okExecutor(), "--force")).toBe(0);
-    expect(out).toContain("updated   .ordito/verify.sh");
-    expect(await read(".ordito/verify.sh")).toContain("Ordito verifier");
+    expect(out).toContain("updated   .themis/verify.sh");
+    expect(await read(".themis/verify.sh")).toContain("Themis verifier");
   });
 
   it("does not run npm with --skip-install", async () => {
@@ -165,18 +165,18 @@ describe("ordito init in an empty directory", () => {
   });
 });
 
-describe("ordito init refusals", () => {
+describe("themis init refusals", () => {
   it("exits 2 without a spec and writes nothing", async () => {
     expect(await run(okExecutor())).toBe(2);
     expect(err).toContain("spec.md not found");
-    expect(await exists(".ordito")).toBe(false);
+    expect(await exists(".themis")).toBe(false);
   });
 
   it("exits 1 for an invalid spec and writes nothing", async () => {
     await writeFile(join(root, "spec.md"), "# no frontmatter\n");
     expect(await run(okExecutor())).toBe(1);
     expect(out).toContain("spec.md:1:1: error[frontmatter-missing]");
-    expect(await exists(".ordito")).toBe(false);
+    expect(await exists(".themis")).toBe(false);
   });
 
   it("honours --spec", async () => {
@@ -195,7 +195,7 @@ describe("ordito init refusals", () => {
     expect(err).toContain('missing dependency "typescript"');
     expect(err).toContain('missing dependency "@biomejs/biome"');
     expect(err).toContain("missing tsconfig.json");
-    expect(await exists(".ordito")).toBe(false);
+    expect(await exists(".themis")).toBe(false);
     expect(await exists(".claude")).toBe(false);
   });
 
@@ -205,7 +205,7 @@ describe("ordito init refusals", () => {
     await writeFile(join(root, ".claude/settings.json"), "{ nope");
     expect(await run(okExecutor())).toBe(2);
     expect(err).toContain("not valid JSON");
-    expect(await exists(".ordito")).toBe(false);
+    expect(await exists(".themis")).toBe(false);
   });
 
   it("exits 2 for an unknown agent", async () => {
@@ -215,7 +215,7 @@ describe("ordito init refusals", () => {
   });
 });
 
-describe("ordito init in an existing node-ts project", () => {
+describe("themis init in an existing node-ts project", () => {
   beforeEach(async () => {
     await writeFile(join(root, "spec.md"), SPEC);
     await writeFile(
@@ -240,7 +240,7 @@ describe("ordito init in an existing node-ts project", () => {
     expect(await read("tsconfig.json")).toBe("// mine\n");
     expect(JSON.parse(await read("package.json")).name).toBe("existing");
     expect(await read(".gitignore")).toBe(
-      "coverage/\nnode_modules/\n\n# Ordito\ndist/\n.verify.log\n.ordito/runs/\n.ordito/state.json\n.ordito/worktrees/\n",
+      "coverage/\nnode_modules/\n\n# Themis\ndist/\n.verify.log\n.themis/runs/\n.themis/state.json\n.themis/worktrees/\n",
     );
     expect(executor.requests.map((r) => r.command)).toEqual(["git"]);
   });

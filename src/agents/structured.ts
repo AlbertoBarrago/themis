@@ -23,7 +23,7 @@ export interface StructuredCall<T> {
   invocation: (rejected: readonly string[]) => AgentInvocation;
   /** Parses and validates the structured output. Agent output is never trusted as is. */
   validate: (structured: unknown) => Validation<T>;
-  /** Project root; each attempt is logged under `.ordito/runs/<logDir>/`. */
+  /** Project root; each attempt is logged under `.themis/runs/<logDir>/`. */
   root: string;
   logDir: string;
   now: () => Date;
@@ -101,7 +101,7 @@ async function logAttempt<T>(
   attempt: number,
   entry: Record<string, unknown>,
 ): Promise<void> {
-  const dir = join(call.root, ".ordito/runs", call.logDir);
+  const dir = join(call.root, ".themis/runs", call.logDir);
   await mkdir(dir, { recursive: true });
   const stamp = startedAt.toISOString().replaceAll(":", "-");
   await writeFile(

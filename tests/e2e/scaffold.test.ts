@@ -10,17 +10,17 @@ import { lines, VALID_BODY } from "../helpers.js";
 
 /**
  * Runs the real toolchain (tsc, Biome, vitest) on a freshly scaffolded project, reusing
- * Ordito's own node_modules (same packages as the scaffold) so no network is needed.
+ * Themis's own node_modules (same packages as the scaffold) so no network is needed.
  * Proves the generated configuration passes its own verifier.
  */
 describe("scaffolded project with the real toolchain", () => {
   it("passes verify.sh for a task and for the full regression", { timeout: 120_000 }, async () => {
-    const root = await mkdtemp(join(tmpdir(), "ordito-e2e-"));
+    const root = await mkdtemp(join(tmpdir(), "themis-e2e-"));
     await writeFile(
       join(root, "spec.md"),
       lines(
         "---",
-        "ordito: 0.1",
+        "themis: 0.1",
         "stack: node-ts",
         "verify: [typecheck, lint, unit, acceptance]",
         "---",
@@ -53,11 +53,11 @@ describe("scaffolded project with the real toolchain", () => {
       'import { describe, expect, it } from "vitest";\nimport { greet } from "../../src/greet.js";\n\ndescribe("AC-1: greets", () => {\n  it("says hello", () => {\n    expect(greet("Ada")).toBe("Hello, Ada");\n  });\n});\n',
     );
     await writeFile(
-      join(root, ".ordito/lock.json"),
-      JSON.stringify({ ordito: "0.1", lockedAt: "x", base: null, dirs: [], files: {} }),
+      join(root, ".themis/lock.json"),
+      JSON.stringify({ themis: "0.1", lockedAt: "x", base: null, dirs: [], files: {} }),
     );
 
-    const result = spawnSync(join(root, ".ordito/verify.sh"), ["AC-1"], {
+    const result = spawnSync(join(root, ".themis/verify.sh"), ["AC-1"], {
       cwd: root,
       encoding: "utf8",
     });

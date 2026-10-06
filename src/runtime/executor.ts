@@ -42,7 +42,7 @@ export class ExecError extends Error {
 }
 
 /**
- * Boundary for every process Ordito starts, including agent CLIs. Implementations decide
+ * Boundary for every process Themis starts, including agent CLIs. Implementations decide
  * where commands run (the local machine today, a sandbox later); callers must not assume
  * anything else about the host.
  */

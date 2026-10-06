@@ -11,7 +11,7 @@ describe("frontmatter", () => {
     const { spec, diagnostics } = parseSpec(lines(...VALID_FRONTMATTER, ...VALID_BODY));
     expect(diagnostics).toEqual([]);
     expect(spec?.frontmatter).toEqual({
-      ordito: "0.1",
+      themis: "0.1",
       stack: "node-ts",
       verify: ["typecheck", "acceptance"],
       limits: { max_iterations: 5, parallel: 3 },
@@ -23,7 +23,7 @@ describe("frontmatter", () => {
   it("merges partial limits and models with defaults", () => {
     const { spec } = parseSpec(
       withFrontmatter(
-        "ordito: 0.1",
+        "themis: 0.1",
         "stack: node-ts",
         "verify: [acceptance]",
         "limits: { parallel: 1 }",
@@ -38,7 +38,7 @@ describe("frontmatter", () => {
   it("accepts a quoted version and keeps x- extensions", () => {
     const { spec, diagnostics } = parseSpec(
       withFrontmatter(
-        'ordito: "0.1"',
+        'themis: "0.1"',
         "stack: node-ts",
         "verify: [acceptance]",
         "x-team: payments",
@@ -55,14 +55,14 @@ describe("frontmatter", () => {
   });
 
   it("reports an unclosed frontmatter", () => {
-    expect(diag(lines("---", "ordito: 0.1", "# Service"))).toContainEqual(
+    expect(diag(lines("---", "themis: 0.1", "# Service"))).toContainEqual(
       expect.objectContaining({ code: "frontmatter-unclosed", line: 1 }),
     );
   });
 
   it("reports YAML syntax errors at the file line", () => {
     const result = diag(
-      withFrontmatter("ordito: 0.1", "stack: node-ts", "verify: [acceptance", "limits: {}"),
+      withFrontmatter("themis: 0.1", "stack: node-ts", "verify: [acceptance", "limits: {}"),
     );
     expect(result[0]).toMatchObject({ code: "yaml-syntax", severity: "error" });
     expect(result[0]?.line).toBeGreaterThanOrEqual(4);
@@ -71,7 +71,7 @@ describe("frontmatter", () => {
   it("reports duplicate keys as YAML errors", () => {
     expect(
       diag(
-        withFrontmatter("ordito: 0.1", "stack: node-ts", "stack: node-ts", "verify: [acceptance]"),
+        withFrontmatter("themis: 0.1", "stack: node-ts", "stack: node-ts", "verify: [acceptance]"),
       ),
     ).toContainEqual(expect.objectContaining({ code: "yaml-syntax", line: 4 }));
   });
@@ -88,14 +88,14 @@ describe("frontmatter", () => {
     ['"1"', '"1"'],
   ])("rejects version %s", (value, shown) => {
     const { diagnostics } = parseSpec(
-      withFrontmatter(`ordito: ${value}`, "stack: node-ts", "verify: [acceptance]"),
+      withFrontmatter(`themis: ${value}`, "stack: node-ts", "verify: [acceptance]"),
     );
     expect(diagnostics).toEqual([
       expect.objectContaining({
         code: "unsupported-version",
         line: 2,
         column: 9,
-        field: "ordito",
+        field: "themis",
         message: expect.stringContaining(shown),
       }),
     ]);
@@ -104,7 +104,7 @@ describe("frontmatter", () => {
   it("reports missing required fields", () => {
     expect(diag(withFrontmatter("limits: { parallel: 2 }"))).toEqual(
       expect.arrayContaining([
-        { code: "invalid-field", severity: "error", line: 1, column: 1, field: "ordito" },
+        { code: "invalid-field", severity: "error", line: 1, column: 1, field: "themis" },
         { code: "invalid-field", severity: "error", line: 1, column: 1, field: "stack" },
         { code: "invalid-field", severity: "error", line: 1, column: 1, field: "verify" },
       ]),
@@ -113,7 +113,7 @@ describe("frontmatter", () => {
 
   it("reports unknown top-level fields at the key", () => {
     expect(
-      diag(withFrontmatter("ordito: 0.1", "stack: node-ts", "verify: [acceptance]", "verfy: []")),
+      diag(withFrontmatter("themis: 0.1", "stack: node-ts", "verify: [acceptance]", "verfy: []")),
     ).toEqual([{ code: "unknown-field", severity: "error", line: 5, column: 1, field: "verfy" }]);
   });
 
@@ -121,7 +121,7 @@ describe("frontmatter", () => {
     expect(
       diag(
         withFrontmatter(
-          "ordito: 0.1",
+          "themis: 0.1",
           "stack: node-ts",
           "verify: [acceptance]",
           "limits:",
@@ -138,7 +138,7 @@ describe("frontmatter", () => {
     expect(
       diag(
         withFrontmatter(
-          "ordito: 0.1",
+          "themis: 0.1",
           "stack: python",
           "verify: [acceptance, e2e]",
           "limits: { max_iterations: 0, parallel: 2.5 }",
@@ -162,13 +162,13 @@ describe("frontmatter", () => {
 
   it("explains enum errors with the allowed values", () => {
     const { diagnostics } = parseSpec(
-      withFrontmatter("ordito: 0.1", "stack: python", "verify: [acceptance]"),
+      withFrontmatter("themis: 0.1", "stack: python", "verify: [acceptance]"),
     );
     expect(diagnostics[0]?.message).toBe("must be one of: node-ts");
   });
 
   it("requires acceptance in verify and rejects duplicates", () => {
-    expect(diag(withFrontmatter("ordito: 0.1", "stack: node-ts", "verify: [lint, lint]"))).toEqual([
+    expect(diag(withFrontmatter("themis: 0.1", "stack: node-ts", "verify: [lint, lint]"))).toEqual([
       { code: "invalid-field", severity: "error", line: 4, column: 9, field: "verify" },
       { code: "invalid-field", severity: "error", line: 4, column: 16, field: "verify[1]" },
     ]);
@@ -176,7 +176,7 @@ describe("frontmatter", () => {
 
   it("rejects an empty verify list", () => {
     const { diagnostics } = parseSpec(
-      withFrontmatter("ordito: 0.1", "stack: node-ts", "verify: []"),
+      withFrontmatter("themis: 0.1", "stack: node-ts", "verify: []"),
     );
     expect(diagnostics.map((d) => d.message)).toContain("must not be empty");
   });

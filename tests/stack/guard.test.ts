@@ -83,10 +83,10 @@ describe("guard.mjs with a lock", () => {
 
   it.each([
     ["{ broken", "not valid JSON"],
-    ['{"ordito":"0.1","base":null,"dirs":[],"files":{"a":"short"}}', "does not match"],
+    ['{"themis":"0.1","base":null,"dirs":[],"files":{"a":"short"}}', "does not match"],
   ])("exits 2 on a corrupt lock", async (content, message) => {
     const p = await Project.create("guard");
-    await p.write(".ordito/lock.json", content);
+    await p.write(".themis/lock.json", content);
     const result = p.guard();
     expect(result.code).toBe(2);
     expect(result.stdout).toContain(message);
