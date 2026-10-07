@@ -6,6 +6,7 @@ import { TasksFileError } from "../../plan/plan.js";
 import { type RunEvent, run } from "../../run/run.js";
 import { StateFileError } from "../../run/state.js";
 import type { Executor } from "../../runtime/executor.js";
+import { chooseExecutor, LocalConfigError, readLocalConfig } from "../../runtime/local-config.js";
 import { LocalExecutor } from "../../runtime/local-executor.js";
 import { EXECUTORS, executorFor } from "../../runtime/select.js";
 import { formatDiagnostic } from "../../spec/diagnostics.js";
@@ -21,8 +22,10 @@ only. State is saved after every step: interrupt with Ctrl-C and run again to re
 Exit codes: 0 every task done, 1 a task failed, 2 a task is blocked or the setup is not ready.
 
 Options:
-  --executor <name>  Where agents and the verifier run: local (default) or lima
-                     (VM from scripts/lima/create-vm.sh; instance THEMIS_LIMA_INSTANCE or "themis")
+  --executor <name>  Where agents and the verifier run: local or lima (VM from
+                     scripts/lima/create-vm.sh; instance THEMIS_LIMA_INSTANCE or "themis").
+                     Default: the one themis init recorded, else local; a different one is
+                     refused, because node_modules holds native binaries for the recorded one
   --agent <name>     Agent adapter (default: ${DEFAULT_AGENT})
   --spec <path>      Spec file (default: spec.md)
   -h, --help
@@ -37,7 +40,7 @@ export async function runCommand(
     args,
     allowPositionals: true,
     options: {
-      executor: { type: "string", default: "local" },
+      executor: { type: "string" },
       agent: { type: "string", default: DEFAULT_AGENT },
       spec: { type: "string", default: "spec.md" },
       help: { type: "boolean", short: "h", default: false },
@@ -51,10 +54,25 @@ export async function runCommand(
     io.stderr(`themis run: expected at most one task id\n\n${RUN_HELP}`);
     return ExitCode.Usage;
   }
-  const executor = executorFor(values.executor, host);
+  let choice: ReturnType<typeof chooseExecutor>;
+  try {
+    choice = chooseExecutor(values.executor, await readLocalConfig(io.cwd));
+  } catch (err) {
+    if (!(err instanceof LocalConfigError)) throw err;
+    io.stderr(`themis run: ${err.message}\n`);
+    return ExitCode.Usage;
+  }
+  if (choice.kind === "conflict") {
+    io.stderr(
+      `themis run: this project was initialised with --executor ${choice.recorded}: node_modules holds native binaries for it, which do not run with ${choice.requested}.\n` +
+        `Run without --executor (or with --executor ${choice.recorded}). To switch, remove node_modules (and .themis/worktrees/*/node_modules), then run themis init --executor ${choice.requested}.\n`,
+    );
+    return ExitCode.Usage;
+  }
+  const executor = executorFor(choice.name, host);
   if (executor === undefined) {
     io.stderr(
-      `themis run: unknown executor "${values.executor}" (available: ${EXECUTORS.join(", ")})\n`,
+      `themis run: unknown executor "${choice.name}" (available: ${EXECUTORS.join(", ")})\n`,
     );
     return ExitCode.Usage;
   }

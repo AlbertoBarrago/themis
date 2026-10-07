@@ -2,8 +2,9 @@ import { parseArgs } from "node:util";
 import { availableAgents, DEFAULT_AGENT, guardInstallerFor } from "../../adapters/registry.js";
 import { init } from "../../init/init.js";
 import type { Executor } from "../../runtime/executor.js";
+import { type LocalConfig, LocalConfigError, readLocalConfig } from "../../runtime/local-config.js";
 import { LocalExecutor } from "../../runtime/local-executor.js";
-import { EXECUTORS, executorFor } from "../../runtime/select.js";
+import { EXECUTORS, executorFor, isExecutorName } from "../../runtime/select.js";
 import { formatDiagnostic } from "../../spec/diagnostics.js";
 import { type CliIo, ExitCode } from "../io.js";
 
@@ -15,8 +16,9 @@ package.json, then writes .themis/ (verifier, guard, agent roles) and agent prot
 Options:
   --spec <path>     Spec file (default: spec.md)
   --agent <name>    Agent adapter (default: ${DEFAULT_AGENT})
-  --executor <name> Where npm install runs: local (default) or lima (the project must then be
-                    run with --executor lima too: native binaries differ per platform)
+  --executor <name> Where npm install runs: local or lima. Recorded in .themis/local.json, so
+                    themis run uses it too (native binaries differ per platform). Default: the
+                    recorded one, else local
   --force           Overwrite generated files whose content differs
   --skip-install    Do not run npm install
   -h, --help
@@ -35,7 +37,7 @@ export async function initCommand(
       spec: { type: "string", default: "spec.md" },
       agent: { type: "string", default: DEFAULT_AGENT },
       force: { type: "boolean", default: false },
-      executor: { type: "string", default: "local" },
+      executor: { type: "string" },
       "skip-install": { type: "boolean", default: false },
       help: { type: "boolean", short: "h", default: false },
     },
@@ -56,10 +58,20 @@ export async function initCommand(
     return ExitCode.Usage;
   }
 
-  const selected = executorFor(values.executor, executor);
-  if (selected === undefined) {
+  let recorded: LocalConfig | undefined;
+  try {
+    recorded = await readLocalConfig(io.cwd);
+  } catch (err) {
+    if (!(err instanceof LocalConfigError)) throw err;
+    io.stderr(`themis init: ${err.message}\n`);
+    return ExitCode.Usage;
+  }
+  // Without --executor, a re-run keeps the executor of the previous one.
+  const executorName = values.executor ?? recorded?.executor ?? "local";
+  const selected = executorFor(executorName, executor);
+  if (selected === undefined || !isExecutorName(executorName)) {
     io.stderr(
-      `themis init: unknown executor "${values.executor}" (available: ${EXECUTORS.join(", ")})\n`,
+      `themis init: unknown executor "${executorName}" (available: ${EXECUTORS.join(", ")})\n`,
     );
     return ExitCode.Usage;
   }
@@ -71,6 +83,8 @@ export async function initCommand(
     install: !values["skip-install"],
     guards,
     executor: selected,
+    executorName,
+    recorded,
   });
 
   switch (outcome.kind) {
@@ -88,6 +102,12 @@ export async function initCommand(
       return ExitCode.Usage;
     case "guard-error":
       io.stderr(`themis init: ${outcome.message}\n`);
+      return ExitCode.Usage;
+    case "executor-mismatch":
+      io.stderr(
+        `themis init: node_modules was installed with --executor ${outcome.recorded}, and its native binaries do not run with ${outcome.requested}.\n` +
+          `To switch, remove node_modules (and .themis/worktrees/*/node_modules), then run themis init --executor ${outcome.requested} again.\n`,
+      );
       return ExitCode.Usage;
     case "done":
       break;

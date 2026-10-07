@@ -581,6 +581,15 @@ describe("themis run CLI", () => {
     expect(out).toBe("AC-1: done after 1 iteration, $2.0000\n");
   });
 
+  it("refuses an executor other than the one themis init recorded", async () => {
+    await writeFile(join(root, ".themis/local.json"), '{"executor":"lima"}');
+    expect(await runCommand(["AC-1", "--executor", "local"], io(), new GitRouter({}))).toBe(2);
+    expect(err).toContain(
+      "themis run: this project was initialised with --executor lima: node_modules holds native binaries for it, which do not run with local.\n" +
+        "Run without --executor (or with --executor lima).",
+    );
+  });
+
   it("exits 1 and asks for an explicit run when only failed or blocked tasks remain", async () => {
     await failAC1();
     await go(executor().router, agents({ "AC-3": [worker()] }, [approve()]).runner);

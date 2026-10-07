@@ -148,11 +148,13 @@ limactl shell themis                 # once: run `claude` inside and log in, the
 
 mkdir -p ~/themis-workspaces/app && cd ~/themis-workspaces/app   # projects live here
 themis init --executor lima          # npm install runs in the VM (native binaries differ)
-themis run --executor lima
+themis run                           # uses the executor init recorded
 ```
 
-Gates (`plan`, `tests`) can run on the host. A project initialised in the VM is verified in
-the VM only.
+Gates (`plan`, `tests`) can run on the host. `themis init` records its executor in
+`.themis/local.json` (git-ignored), and `themis run` uses it: `node_modules` holds native
+binaries for the platform that installed it, so a project initialised in the VM is verified in
+the VM only, and `themis run --executor local` on it is refused with the steps to switch.
 
 ## The format
 
@@ -261,6 +263,7 @@ Every command, and the verifier, uses the same convention:
   tasks.json         the plan (draft or approved)
   tests.json         the acceptance-test gate
   lock.json          sha256 of every file in the contract
+  local.json         the executor init installed node_modules with (git-ignored)
   state.json         run state, per task and iteration (git-ignored)
   runs/              every agent call: result, tokens, cost; retro.json, the pending
                      retrospective proposal (git-ignored)

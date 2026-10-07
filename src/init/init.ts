@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { GuardInstallError, type GuardInstaller } from "../adapters/guard-installer.js";
 import { type FileChange, isNotFound, readIfExists, writeGenerated } from "../fs/generated.js";
 import { ExecError, type Executor } from "../runtime/executor.js";
+import { LOCAL_CONFIG_PATH, type LocalConfig, renderLocalConfig } from "../runtime/local-config.js";
+import type { ExecutorName } from "../runtime/select.js";
 import type { Diagnostic } from "../spec/diagnostics.js";
 import { parseSpec } from "../spec/parse.js";
 import { protectedPaths } from "../stack/node-ts/contract.js";
@@ -23,6 +25,10 @@ export interface InitOptions {
   install: boolean;
   guards: GuardInstaller;
   executor: Executor;
+  /** Name of `executor`, recorded in `.themis/local.json`. */
+  executorName: ExecutorName;
+  /** What a previous `init` recorded, if anything. */
+  recorded: LocalConfig | undefined;
 }
 
 export type InitOutcome =
@@ -30,6 +36,7 @@ export type InitOutcome =
   | { kind: "invalid-spec"; diagnostics: Diagnostic[] }
   | { kind: "incompatible"; problems: string[] }
   | { kind: "guard-error"; message: string }
+  | { kind: "executor-mismatch"; recorded: ExecutorName; requested: ExecutorName }
   | {
       kind: "done";
       scaffolded: boolean;
@@ -77,6 +84,18 @@ export async function init(options: InitOptions): Promise<InitOutcome> {
   if (detection.kind === "incompatible")
     return { kind: "incompatible", problems: detection.problems };
   const scaffolded = detection.kind === "empty";
+  // Installed dependencies hold native binaries for the executor that installed them.
+  if (
+    detection.kind === "node-ts" &&
+    detection.hasNodeModules &&
+    options.recorded !== undefined &&
+    options.recorded.executor !== options.executorName
+  )
+    return {
+      kind: "executor-mismatch",
+      recorded: options.recorded.executor,
+      requested: options.executorName,
+    };
 
   const changes: FileChange[] = [];
   try {
@@ -98,6 +117,15 @@ export async function init(options: InitOptions): Promise<InitOutcome> {
     const writeOptions = file.mode === undefined ? { force } : { force, mode: file.mode };
     changes.push(await writeGenerated(root, file.path, file.content, writeOptions));
   }
+  changes.push(
+    await writeGenerated(
+      root,
+      LOCAL_CONFIG_PATH,
+      renderLocalConfig({ executor: options.executorName }),
+      // Always current: a conflicting record was refused above, or has no node_modules behind it.
+      { force: true },
+    ),
+  );
   changes.push(await mergeGitignore(root, await gitignoreEntries()));
 
   const warnings = changes

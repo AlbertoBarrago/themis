@@ -240,7 +240,7 @@ describe("themis init in an existing node-ts project", () => {
     expect(await read("tsconfig.json")).toBe("// mine\n");
     expect(JSON.parse(await read("package.json")).name).toBe("existing");
     expect(await read(".gitignore")).toBe(
-      "coverage/\nnode_modules/\n\n# Themis\ndist/\n.verify.log\n.themis/runs/\n.themis/state.json\n.themis/worktrees/\n",
+      "coverage/\nnode_modules/\n\n# Themis\ndist/\n.verify.log\n.themis/runs/\n.themis/state.json\n.themis/worktrees/\n.themis/local.json\n",
     );
     expect(executor.requests.map((r) => r.command)).toEqual(["git"]);
   });
@@ -249,5 +249,62 @@ describe("themis init in an existing node-ts project", () => {
     const executor = okExecutor();
     expect(await run(executor)).toBe(0);
     expect(executor.requests.map((r) => r.command)).toEqual(["git", "npm"]);
+  });
+});
+
+describe("themis init records the executor", () => {
+  /** Host where `limactl shell` runs the inner command as if it were local and successful. */
+  function limaHost() {
+    return new FakeExecutor({
+      git: () => ({ stdout: "true\n" }),
+      npm: () => ({}),
+      limactl: () => ({ stdout: "true\n" }),
+    });
+  }
+  const local = async () => JSON.parse(await read(".themis/local.json"));
+
+  beforeEach(async () => {
+    await writeFile(join(root, "spec.md"), SPEC);
+  });
+
+  it("records local by default, in a gitignored file", async () => {
+    expect(await run(okExecutor())).toBe(0);
+    expect(await local()).toEqual({ executor: "local" });
+    expect(out).toContain("created   .themis/local.json");
+    expect(await read(".gitignore")).toContain(".themis/local.json\n");
+  });
+
+  it("keeps the recorded executor when a re-run gives none", async () => {
+    expect(await run(limaHost(), "--executor", "lima")).toBe(0);
+    expect(await local()).toEqual({ executor: "lima" });
+    const host = limaHost();
+    expect(await run(host, "--skip-install")).toBe(0);
+    expect(host.requests.map((r) => r.command)).toEqual(["limactl"]);
+    expect(await local()).toEqual({ executor: "lima" });
+  });
+
+  it("refuses another executor while node_modules exists, writing nothing", async () => {
+    expect(await run(limaHost(), "--executor", "lima")).toBe(0);
+    await mkdir(join(root, "node_modules"));
+    await writeFile(join(root, ".themis/verify.sh"), "mine");
+    expect(await run(okExecutor(), "--executor", "local", "--force")).toBe(2);
+    expect(err).toContain(
+      "themis init: node_modules was installed with --executor lima, and its native binaries do not run with local.",
+    );
+    expect(await local()).toEqual({ executor: "lima" });
+    expect(await read(".themis/verify.sh")).toBe("mine");
+  });
+
+  it("switches executor once node_modules is gone", async () => {
+    expect(await run(limaHost(), "--executor", "lima", "--skip-install")).toBe(0);
+    expect(await run(okExecutor(), "--executor", "local", "--skip-install")).toBe(0);
+    expect(await local()).toEqual({ executor: "local" });
+  });
+
+  it("exits 2 on an unreadable record", async () => {
+    await mkdir(join(root, ".themis"));
+    await writeFile(join(root, ".themis/local.json"), '{"executor":"docker"}');
+    expect(await run(okExecutor())).toBe(2);
+    expect(err).toContain("themis init: .themis/local.json is invalid");
   });
 });
