@@ -590,6 +590,18 @@ describe("themis run CLI", () => {
     );
   });
 
+  it("uses the recorded executor, and stops early when its VM is unreachable", async () => {
+    await writeFile(join(root, ".themis/local.json"), '{"executor":"lima"}');
+    const host = new GitRouter({ limactl: () => ({ stdout: "Stopped\n" }) });
+    expect(await runCommand(["AC-1"], io(), host)).toBe(2);
+    expect(err).toBe(
+      'themis run: Lima VM "themis" is stopped: start it with limactl start themis\n',
+    );
+    expect(host.fake.requests.map((r) => [r.command, ...r.args])).toEqual([
+      ["limactl", "list", "--format", "{{.Status}}", "themis"],
+    ]);
+  });
+
   it("exits 1 and asks for an explicit run when only failed or blocked tasks remain", async () => {
     await failAC1();
     await go(executor().router, agents({ "AC-3": [worker()] }, [approve()]).runner);

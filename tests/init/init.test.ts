@@ -258,7 +258,7 @@ describe("themis init records the executor", () => {
     return new FakeExecutor({
       git: () => ({ stdout: "true\n" }),
       npm: () => ({}),
-      limactl: () => ({ stdout: "true\n" }),
+      limactl: (req) => ({ stdout: req.args[0] === "list" ? "Running\n" : "true\n" }),
     });
   }
   const local = async () => JSON.parse(await read(".themis/local.json"));
@@ -279,7 +279,11 @@ describe("themis init records the executor", () => {
     expect(await local()).toEqual({ executor: "lima" });
     const host = limaHost();
     expect(await run(host, "--skip-install")).toBe(0);
-    expect(host.requests.map((r) => r.command)).toEqual(["limactl"]);
+    expect(host.requests.map((r) => [r.command, r.args[0]])).toEqual([
+      ["limactl", "list"],
+      ["limactl", "shell"],
+      ["limactl", "shell"],
+    ]);
     expect(await local()).toEqual({ executor: "lima" });
   });
 
@@ -306,5 +310,17 @@ describe("themis init records the executor", () => {
     await writeFile(join(root, ".themis/local.json"), '{"executor":"docker"}');
     expect(await run(okExecutor())).toBe(2);
     expect(err).toContain("themis init: .themis/local.json is invalid");
+  });
+});
+
+describe("themis init with an unreachable VM", () => {
+  it("exits 2 with what to do, before writing anything", async () => {
+    await writeFile(join(root, "spec.md"), SPEC);
+    const host = new FakeExecutor({ limactl: () => ({ stdout: "Stopped\n" }) });
+    expect(await run(host, "--executor", "lima")).toBe(2);
+    expect(err).toBe(
+      'themis init: Lima VM "themis" is stopped: start it with limactl start themis\n',
+    );
+    expect(await exists(".themis")).toBe(false);
   });
 });

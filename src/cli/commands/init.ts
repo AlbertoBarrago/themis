@@ -75,6 +75,11 @@ export async function initCommand(
     );
     return ExitCode.Usage;
   }
+  const unavailable = await selected.check?.(io.cwd);
+  if (unavailable !== undefined) {
+    io.stderr(`themis init: ${unavailable}\n`);
+    return ExitCode.Usage;
+  }
   const specPath = values.spec.replaceAll("\\", "/").replace(/^\.\//, "");
   const outcome = await init({
     root: io.cwd,

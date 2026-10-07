@@ -83,6 +83,11 @@ export async function runCommand(
     );
     return ExitCode.Usage;
   }
+  const unavailable = await executor.check?.(io.cwd);
+  if (unavailable !== undefined) {
+    io.stderr(`themis run: ${unavailable}\n`);
+    return ExitCode.Usage;
+  }
   const specPath = values.spec.replaceAll("\\", "/").replace(/^\.\//, "");
 
   let outcome: Awaited<ReturnType<typeof run>>;

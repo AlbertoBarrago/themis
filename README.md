@@ -155,6 +155,8 @@ Gates (`plan`, `tests`) can run on the host. `themis init` records its executor 
 `.themis/local.json` (git-ignored), and `themis run` uses it: `node_modules` holds native
 binaries for the platform that installed it, so a project initialised in the VM is verified in
 the VM only, and `themis run --executor local` on it is refused with the steps to switch.
+Before any work, `init` and `run` check that the VM exists, is running and answers, and say
+what to do when it does not (`limactl start themis`, wait for the boot, create the VM).
 
 ## The format
 

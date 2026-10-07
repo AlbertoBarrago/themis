@@ -48,4 +48,11 @@ export class ExecError extends Error {
  */
 export interface Executor {
   exec(request: ExecRequest): Promise<ExecResult>;
+  /**
+   * Returns why commands cannot run right now, with what to do about it, or `undefined` when
+   * they can. Commands call it before any work, so an unreachable sandbox is reported once and
+   * clearly instead of as the failure of whatever command happened to run first. Executors
+   * that are always available omit it.
+   */
+  check?(cwd: string): Promise<string | undefined>;
 }
