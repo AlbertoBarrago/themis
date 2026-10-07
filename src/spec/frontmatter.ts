@@ -1,7 +1,14 @@
 import { isMap, isNode, isScalar, LineCounter, type Node, parseDocument, type YAMLMap } from "yaml";
 import { z } from "zod";
 import { type Diagnostic, error } from "./diagnostics.js";
-import { FORMAT_VERSION, type Frontmatter, MODEL_TIERS, STACKS, VERIFY_STEPS } from "./types.js";
+import {
+  FORMAT_VERSION,
+  type Frontmatter,
+  LIMIT_BOUNDS,
+  MODEL_TIERS,
+  STACKS,
+  VERIFY_STEPS,
+} from "./types.js";
 
 const KNOWN_KEYS = new Set(["themis", "stack", "verify", "limits", "models"]);
 const EXTENSION_PREFIX = "x-";
@@ -37,8 +44,16 @@ const schema = z.object({
     }),
   limits: z
     .strictObject({
-      max_iterations: z.int().min(1).max(50).default(DEFAULT_LIMITS.max_iterations),
-      parallel: z.int().min(1).max(16).default(DEFAULT_LIMITS.parallel),
+      max_iterations: z
+        .int()
+        .min(LIMIT_BOUNDS.max_iterations.min)
+        .max(LIMIT_BOUNDS.max_iterations.max)
+        .default(DEFAULT_LIMITS.max_iterations),
+      parallel: z
+        .int()
+        .min(LIMIT_BOUNDS.parallel.min)
+        .max(LIMIT_BOUNDS.parallel.max)
+        .default(DEFAULT_LIMITS.parallel),
     })
     .default(DEFAULT_LIMITS),
   models: z

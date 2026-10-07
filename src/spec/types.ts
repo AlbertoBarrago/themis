@@ -24,6 +24,12 @@ export interface Limits {
   parallel: number;
 }
 
+/** Inclusive bounds of each limit (SPEC_FORMAT.md, section 3.4). */
+export const LIMIT_BOUNDS: Record<keyof Limits, { min: number; max: number }> = {
+  max_iterations: { min: 1, max: 50 },
+  parallel: { min: 1, max: 16 },
+};
+
 export type Models = Record<AgentRole, ModelTier>;
 
 /** Frontmatter with defaults applied. */

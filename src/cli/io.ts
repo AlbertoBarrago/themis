@@ -3,6 +3,12 @@ export interface CliIo {
   cwd: string;
   stdout: (text: string) => void;
   stderr: (text: string) => void;
+  /**
+   * Asks the user one question and resolves with the answer, or `undefined` when input ended
+   * (Ctrl+C, Ctrl+D). Absent when there is no interactive terminal: commands must then fall back
+   * to non-interactive behavior instead of waiting on input that never comes.
+   */
+  prompt?: (question: string) => Promise<string | undefined>;
 }
 
 /**

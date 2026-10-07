@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { approveCommand } from "./commands/approve.js";
 import { check } from "./commands/check.js";
 import { initCommand } from "./commands/init.js";
+import { newCommand } from "./commands/new.js";
 import { planCommand } from "./commands/plan.js";
 import { retroCommand } from "./commands/retro.js";
 import { runCommand } from "./commands/run.js";
@@ -12,6 +13,7 @@ import { type CliIo, ExitCode } from "./io.js";
 const HELP = `Usage: themis <command> [options]
 
 Commands:
+  new [spec]     Write a spec skeleton to fill in, with a short wizard in a terminal
   check [spec]   Validate a spec file (default: spec.md)
   init           Prepare the project: verifier, guard, agent roles, protections
   plan           Ask the planner for a task graph (draft .themis/tasks.json)
@@ -31,6 +33,7 @@ Options:
 type Command = (args: string[], io: CliIo) => Promise<ExitCode>;
 
 const COMMANDS: Record<string, Command> = {
+  new: (args, io) => newCommand(args, io),
   check,
   init: (args, io) => initCommand(args, io),
   plan: (args, io) => planCommand(args, io),

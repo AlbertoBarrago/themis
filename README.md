@@ -95,7 +95,8 @@ questions go to [Discussions](https://github.com/AlbertoBarrago/themis/discussio
 
 ```sh
 mkdir greeter && cd greeter && git init -b main
-$EDITOR spec.md                   # see "The format" below
+themis new                        # a short wizard writes a spec skeleton to fill in
+$EDITOR spec.md                   # replace the <...> placeholders; see "The format" below
 
 themis check                      # every problem with line, column and field
 themis init                       # scaffolds a node-ts project if the folder is empty
@@ -192,6 +193,7 @@ Depends: none
 
 | Command | What it does |
 | --- | --- |
+| `themis new [spec] [--yes] [--force]` | Writes a spec skeleton (default `spec.md`) that passes `themis check`, with `<...>` placeholders to fill in. In a terminal a short wizard asks for the title, the verify steps, the limits and the criteria with their dependencies; without one, or with `--yes`, it uses the defaults. Refuses to overwrite unless `--force`. |
 | `themis check [spec] [--json]` | Validates a spec; every diagnostic has a line, a column, a stable code and, for frontmatter, the field path. |
 | `themis init [--spec <path>] [--executor local\|lima] [--force] [--skip-install]` | Scaffolds an empty folder (or checks an existing project) and generates `.themis/` and the agent protections. |
 | `themis plan [--spec <path>] [--force]` | Planner agent, no tools, structured output. Themis checks the graph: one task per criterion plus an optional `setup`, declared dependencies kept, added ones justified, no cycles. |
