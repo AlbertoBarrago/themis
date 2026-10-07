@@ -137,8 +137,9 @@ AC-3: done after 2 iterations</span></code></pre>
               <div>
                 <p class="cmd">spec.md</p>
                 <p>
-                  You write decisions and acceptance criteria. <code>themis check</code> reports
-                  every problem with line, column and field.
+                  You write decisions and acceptance criteria, from scratch or from the skeleton
+                  <code>themis new</code> builds with a short wizard. <code>themis check</code>
+                  reports every problem with line, column and field.
                 </p>
               </div>
             </li>
@@ -403,7 +404,8 @@ Depends: none
               <span></span><span></span><span></span>
               <p>terminal</p>
             </div>
-            <pre><code><span class="dim">$</span> themis check
+            <pre><code><span class="dim">$</span> themis new
+<span class="dim">$</span> themis check
 <span class="dim">$</span> themis init
 <span class="dim">$</span> themis plan  <span class="dim">&amp;&amp;</span> themis approve plan
 <span class="dim">$</span> themis tests <span class="dim">&amp;&amp;</span> themis approve tests
