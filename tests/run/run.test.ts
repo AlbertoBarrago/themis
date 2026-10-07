@@ -428,19 +428,116 @@ describe("run", () => {
   });
 });
 
-describe("themis run CLI", () => {
-  it("reports progress and exits by outcome", async () => {
-    let out = "";
-    let err = "";
-    const io = {
-      cwd: root,
-      stdout: (t: string) => {
-        out += t;
-      },
-      stderr: (t: string) => {
-        err += t;
-      },
+/** Runs AC-1 until its budget is spent: the verifier fails each of the three iterations. */
+async function failAC1(): Promise<void> {
+  const { runner } = agents([worker(), worker(), worker()], []);
+  await go(executor({ worktree: [1, 1, 1] }).router, runner, "AC-1");
+}
+
+describe("retry and resume", () => {
+  it("fails a task that spends its budget", async () => {
+    await failAC1();
+    expect((await state()).tasks["AC-1"]).toMatchObject({
+      status: "failed",
+      attemptStart: 0,
+      reason: "not done after 3 iterations (last: verifier failed at typecheck)",
+    });
+  });
+
+  it("never retries a failed task on its own, nor runs its dependents", async () => {
+    await failAC1();
+    const { runner } = agents({ "AC-3": [worker()] }, [approve()]);
+    const outcome = await go(executor().router, runner);
+    expect(outcome).toMatchObject({ kind: "finished", ran: ["AC-3"] });
+    const s = await state();
+    expect(s.tasks["AC-1"]).toMatchObject({ status: "failed" });
+    expect(s.tasks["AC-1"].iterations).toHaveLength(3);
+    expect(s.tasks["AC-2"]?.status ?? "pending").toBe("pending");
+  });
+
+  it("starts a fresh attempt with a full budget when a failed task is run explicitly", async () => {
+    await failAC1();
+    const events: RunEvent[] = [];
+    const { runner } = agents([worker()], [approve()]);
+    await go(executor().router, runner, "AC-1", events);
+
+    const s = (await state()).tasks["AC-1"];
+    expect(s).toMatchObject({ status: "done", attemptStart: 3, reason: null });
+    // The failed attempt stays in the history; the new one continues the ordinal numbering.
+    expect(
+      s.iterations.map((i: { iteration: number; verifyExit: number }) => [
+        i.iteration,
+        i.verifyExit,
+      ]),
+    ).toEqual([
+      [1, 1],
+      [2, 1],
+      [3, 1],
+      [4, 0],
+    ]);
+    expect(events[0]).toEqual({ type: "task-start", task: "AC-1", resumed: false });
+    expect(events.find((e) => e.type === "iteration-start")).toEqual({
+      type: "iteration-start",
+      task: "AC-1",
+      iteration: 1,
+      max: 3,
+    });
+    expect(existsSync(join(root, ".themis/runs/AC-1/iteration-1-worker.json"))).toBe(true);
+    expect(existsSync(join(root, ".themis/runs/AC-1/iteration-4-worker.json"))).toBe(true);
+  });
+
+  it("starts a fresh attempt when a blocked task is run explicitly", async () => {
+    await go(executor({ worktree: [2] }).router, agents([worker()], []).runner, "AC-1");
+    expect((await state()).tasks["AC-1"]).toMatchObject({ status: "blocked", attemptStart: 0 });
+
+    await go(executor().router, agents([worker()], [approve()]).runner, "AC-1");
+    const s = (await state()).tasks["AC-1"];
+    expect(s).toMatchObject({ status: "done", attemptStart: 1, reason: null });
+    expect(s.iterations).toHaveLength(2);
+  });
+
+  it("resumes an interrupted attempt without resetting its budget", async () => {
+    await failAC1();
+    const s = await state();
+    s.tasks["AC-1"] = {
+      ...s.tasks["AC-1"],
+      status: "running",
+      reason: null,
+      iterations: s.tasks["AC-1"].iterations.slice(0, 2),
     };
+    await writeFile(join(root, ".themis/state.json"), JSON.stringify(s));
+
+    const events: RunEvent[] = [];
+    await go(executor({ worktree: [1] }).router, agents([worker()], []).runner, "AC-1", events);
+    expect(events[0]).toEqual({ type: "task-start", task: "AC-1", resumed: true });
+    expect(events.filter((e) => e.type === "iteration-start").map((e) => e.iteration)).toEqual([3]);
+    expect((await state()).tasks["AC-1"]).toMatchObject({
+      status: "failed",
+      attemptStart: 0,
+      iterations: { length: 3 },
+    });
+  });
+});
+
+describe("themis run CLI", () => {
+  let out: string;
+  let err: string;
+  const io = () => ({
+    cwd: root,
+    stdout: (t: string) => {
+      out += t;
+    },
+    stderr: (t: string) => {
+      err += t;
+    },
+  });
+  beforeEach(() => {
+    out = "";
+    err = "";
+  });
+
+  /** Host where `claude` edits as a worker and approves as a reviewer, at $1 per call. */
+  function claudeHost(): GitRouter {
     const claude = (inv: { args: readonly string[]; cwd: string }) => {
       const review = inv.args.includes("Read,Grep,Glob");
       if (!review) writeFileSync(join(inv.cwd, "x.ts"), "export {};\n");
@@ -458,7 +555,7 @@ describe("themis run CLI", () => {
         durationMs: 1000,
       };
     };
-    const host = new GitRouter({
+    return new GitRouter({
       claude,
       npm: (req) => {
         mkdirSync(join(req.cwd, "node_modules"), { recursive: true });
@@ -467,10 +564,29 @@ describe("themis run CLI", () => {
       },
       ".themis/verify.sh": () => ({ exitCode: 0 }),
     });
-    expect(await runCommand(["AC-1"], io, host)).toBe(0);
+  }
+
+  it("reports progress and exits by outcome", async () => {
+    expect(await runCommand(["AC-1"], io(), claudeHost())).toBe(0);
     expect(err).toContain(
       "AC-1 iteration 1: review approved ($1.0000); merging...\nAC-1: merged and verified\nAC-1: done\n",
     );
     expect(out).toBe("AC-1: done after 1 iteration, $2.0000\n");
+  });
+
+  it("counts only the current attempt in the summary of a retried task", async () => {
+    await failAC1();
+    expect(await runCommand(["AC-1"], io(), claudeHost())).toBe(0);
+    expect(err).toContain("AC-1 iteration 1/3: worker...\n");
+    expect(out).toBe("AC-1: done after 1 iteration, $2.0000\n");
+  });
+
+  it("exits 1 and asks for an explicit run when only failed or blocked tasks remain", async () => {
+    await failAC1();
+    await go(executor().router, agents({ "AC-3": [worker()] }, [approve()]).runner);
+    expect(await runCommand([], io(), new GitRouter({}))).toBe(1);
+    expect(err).toContain(
+      "themis run: no runnable task; failed or blocked: AC-1 (run them explicitly to retry)\n",
+    );
   });
 });

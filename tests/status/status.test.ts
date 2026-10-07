@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { statusCommand } from "../../src/cli/commands/status.js";
 import { sha256 } from "../../src/fs/digest.js";
 import { status } from "../../src/status/status.js";
-import { HISTORY_SPEC, writeHistory } from "../fakes/run-history.js";
+import { HISTORY_SPEC, iteration, withoutReview, writeHistory } from "../fakes/run-history.js";
 
 let root: string;
 let out: string;
@@ -144,6 +144,35 @@ describe("themis status", () => {
     );
     expect(out).toContain("AC-3  pending  0/3 iterations\n");
     expect(out).toContain("total     5 iterations, $0.7000\n");
+  });
+
+  it("shows the budget of the current attempt and the total of a retried task", async () => {
+    await writeHistory(root, {
+      themis: "0.1",
+      tasks: {
+        "AC-1": {
+          status: "done",
+          iterations: [
+            ...[1, 2, 3].map((n) =>
+              withoutReview(iteration(n, { verifyExit: 1, failedStep: "typecheck" })),
+            ),
+            iteration(4),
+          ],
+          attemptStart: 3,
+          reason: null,
+          choices: [],
+        },
+      },
+    });
+    const report = await status(root, "spec.md");
+    expect(report.tasks[0]).toMatchObject({
+      iterations: 1,
+      maxIterations: 3,
+      totalIterations: 4,
+      costUsd: expect.closeTo(0.45),
+    });
+    expect(await statusCommand([], io())).toBe(0);
+    expect(out).toContain("AC-1  done     1/3 iterations (4 total), $0.4500\n");
   });
 
   it("prints JSON with --json", async () => {
