@@ -19,7 +19,6 @@
   <img alt="Node.js 22+" src="https://img.shields.io/badge/node-%E2%89%A522-5f584e">
   <img alt="Status: early development" src="https://img.shields.io/badge/status-early%20development-5f584e">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/AlbertoBarrago/themis?color=5f584e"></a>
-  <a href="https://github.com/AlbertoBarrago/themis/actions/workflows/pages.yml"><img alt="Site deploy" src="https://github.com/AlbertoBarrago/themis/actions/workflows/pages.yml/badge.svg"></a>
 </p>
 
 Themis is the Titaness of divine law and order: she lays down what is right, and her scales
