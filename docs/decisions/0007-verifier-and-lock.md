@@ -26,9 +26,9 @@ Both are part of the locked contract.
 | ----------- | --------------------------------------------------------------------------- | --------------------------------------------- | --------------------------------- |
 | preflight   |                                                                             | `node` missing, `node_modules` missing, bad `TASK_ID` |                          |
 | guard       | `node .themis/guard.mjs`                                                    | lock corrupt, git needed but unavailable       | digest mismatch, extra or missing locked file, forbidden marker |
-| typecheck   | `node_modules/.bin/tsc --noEmit`                                            | binary missing                                 | non-zero exit                     |
-| lint        | `node_modules/.bin/biome check .`                                           | binary missing                                 | non-zero exit                     |
-| unit        | `vitest run --exclude 'tests/acceptance/**' --passWithNoTests --retry=0`    | binary missing                                 | non-zero exit                     |
+| typecheck   | `node_modules/.bin/tsc --noEmit`                                            | binary missing or not starting (ADR 0018)    | non-zero exit                     |
+| lint        | `node_modules/.bin/biome check .`                                           | binary missing or not starting (ADR 0018)    | non-zero exit                     |
+| unit        | `vitest run --exclude 'tests/acceptance/**' --passWithNoTests --retry=0`    | binary missing or not starting (ADR 0018)    | non-zero exit                     |
 | infra       | `docker compose config -q`, then `docker compose up -d --wait`              | `docker info` fails, `up` fails                | no compose file, invalid compose file |
 | migrate     | `npm run migrate`                                                           |                                                | script missing, non-zero exit     |
 | acceptance  | `vitest run tests/acceptance --retry=0 [-t '^(AC-<n>\|...):']`              | lock missing ("contract not locked")           | non-zero exit                     |

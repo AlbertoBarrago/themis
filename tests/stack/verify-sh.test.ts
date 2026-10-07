@@ -7,10 +7,16 @@ import { Project } from "./project.js";
 
 const ALL_STEPS = "typecheck lint unit infra migrate acceptance";
 
-/** Stub that logs its invocation, prints coloured output and exits with `$<var>` (default 0). */
+/**
+ * Stub that logs its invocation, prints coloured output and exits with `$<var>` (default 0).
+ * `--version` (the verifier's start-up probe) is answered first and logged apart, in
+ * `$STUB_LOG.probes`; it exits with
+ * `$STUB_<NAME>_VERSION`, so a test can simulate a tool that does not start.
+ */
 function stub(name: string, exitExpression: string): string {
   return [
     "#!/bin/sh",
+    `if [ "$1" = "--version" ]; then echo "${name}" >> "$STUB_LOG.probes"; echo "${name} cannot start" >&2; exit "\${STUB_${name.toUpperCase()}_VERSION:-0}"; fi`,
     `echo "${name} $*" >> "$STUB_LOG"`,
     `printf '\\033[31m${name} output\\033[0m\\n'`,
     `for i in 1 2 3 4 5; do echo "${name} line $i"; done`,
@@ -181,6 +187,24 @@ describe("verify.sh failures", () => {
     const p = await project({ steps: "typecheck" });
     await p.write("node_modules/.bin/tsc", "#!/bin/sh\nexit 127\n", 0o755);
     expect(verify(p).code).toBe(2);
+  });
+
+  it("exits 2 for a tool that is installed but does not start, before running it", async () => {
+    const p = await project({ steps: "typecheck lint" });
+    const result = verify(p, [], { STUB_BIOME_VERSION: "1" });
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("verify: FAIL at lint (exit 2)");
+    expect(await result.calls()).toEqual(["tsc --noEmit"]);
+    const log = await result.log();
+    expect(log).toMatch(/^step: lint\nexit: 2\ncommand: .*biome --version\n/);
+    expect(log).toContain("message: biome is installed but does not start here");
+    expect(log).toContain("biome cannot start");
+  });
+
+  it("probes each tool once, even when two steps use it", async () => {
+    const p = await project({ steps: "unit acceptance" });
+    expect(verify(p).code).toBe(0);
+    expect(await readFile(join(p.root, "stub.log.probes"), "utf8")).toBe("vitest\n");
   });
 
   it("exits 2 for a missing binary", async () => {

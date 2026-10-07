@@ -75,10 +75,21 @@ abort() {
   fail "$@"
 }
 
+PROBED=" "
+
+# require_bin <step> <binary>: the binary must exist and start. A tool that is installed but
+# crashes on start (native binaries for another platform, a broken install) would otherwise
+# fail the step with exit 1, as if the code were wrong, and spend an iteration on nothing.
 require_bin() {
   if [ ! -x "$BIN/$2" ]; then
     abort "$1" 2 "$BIN/$2" "$2 is not installed; run npm install"
   fi
+  case "$PROBED" in *" $2 "*) return 0 ;; esac
+  if ! "$BIN/$2" --version >"$OUTPUT" 2>&1; then
+    fail "$1" 2 "$BIN/$2 --version" \
+      "$2 is installed but does not start here (node_modules installed on another platform, or a broken install): reinstall dependencies with the executor in use"
+  fi
+  PROBED="$PROBED$2 "
 }
 
 # --- preflight -------------------------------------------------------------------------------
