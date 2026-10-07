@@ -4,11 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-(Formerly "Ordito"; renamed to Themis, see ADR 0012. The npm package is
-`themis-spec`, the binary is `themis`.)
-
 Themis is an open format (`SPEC_FORMAT.md`, version `0.1`) plus a reference CLI (npm package
-`themis`) for spec-driven agentic development with a verification loop. Humans own the spec
+`themis-spec`, binary `themis`) for spec-driven agentic development with a verification loop. Humans own the spec
 and the locked acceptance tests; agents produce code until a single verifier passes.
 
 `SPEC_FORMAT.md` is normative and must stay usable without the CLI. When parser behavior
