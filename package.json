@@ -1,7 +1,23 @@
 {
   "name": "themis-spec",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Open format and reference CLI for spec-driven agentic development with a verification loop",
+  "keywords": [
+    "spec-driven",
+    "agents",
+    "ai",
+    "verification",
+    "acceptance-tests",
+    "cli"
+  ],
+  "homepage": "https://albz.it/themis/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlbertoBarrago/themis.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AlbertoBarrago/themis/issues"
+  },
   "type": "module",
   "license": "MIT",
   "bin": {
@@ -23,7 +39,8 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "test": "vitest run",
-    "check": "npm run typecheck && npm run lint && npm run test"
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "prepublishOnly": "npm run check && npm run build"
   },
   "dependencies": {
     "yaml": "^2.9.1",
