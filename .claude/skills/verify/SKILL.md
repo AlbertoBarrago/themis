@@ -59,10 +59,16 @@ Expected:
 
 If the change touches a command not listed above (for example `new`, `approve`, a new flag or a new diagnostic), add a run of that command against the temp project, with its expected exit code and output, to the report.
 
-## 4. Report
+## 4. Publish manifest
+
+    npm publish --dry-run --ignore-scripts 2>&1 | grep -E 'auto-corrected|errors corrected|was invalid and removed'
+
+Expected: no output. Any match means `npm publish` would silently rewrite `package.json` (for example drop a `bin` entry, which `npm pack` does not reveal); fix `package.json` instead. The exit code is not the signal: once the current version is on npm the dry run ends with "cannot publish over the previously published versions", which is expected.
+
+## 5. Report
 
 Reply with:
 
 - each command with its exit code;
 - the relevant output lines for every flow, and any deviation from the table;
-- the `Verified:` trailer value: `verify` when steps 1 to 3 passed, `tests` when only step 1 ran, `none (<reason>)` otherwise.
+- the `Verified:` trailer value: `verify` when steps 1 to 4 passed, `tests` when only step 1 ran, `none (<reason>)` otherwise.
