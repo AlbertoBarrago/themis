@@ -29,7 +29,7 @@ Both are part of the locked contract.
 | typecheck   | `node_modules/.bin/tsc --noEmit`                                            | binary missing or not starting (ADR 0018)    | non-zero exit                     |
 | lint        | `node_modules/.bin/biome check .`                                           | binary missing or not starting (ADR 0018)    | non-zero exit                     |
 | unit        | `vitest run --exclude 'tests/acceptance/**' --passWithNoTests --retry=0`    | binary missing or not starting (ADR 0018)    | non-zero exit                     |
-| infra       | `docker compose config -q`, then `docker compose up -d --wait`              | `docker info` fails, `up` fails                | no compose file, invalid compose file |
+| infra       | `docker compose config -q`, then `docker compose up -d --wait`              | `docker info` fails, Compose plugin missing (ADR 0018), `up` fails | no compose file, invalid compose file |
 | migrate     | `npm run migrate`                                                           |                                                | script missing, non-zero exit     |
 | acceptance  | `vitest run tests/acceptance --retry=0 [-t '^(AC-<n>\|...):']`              | lock missing ("contract not locked")           | non-zero exit                     |
 
@@ -37,6 +37,9 @@ Compose file and migrations are written by agents (the planner's `setup` task), 
 absence or a failing migration is a code problem (`1`). This matches `SPEC_FORMAT.md` 6.3,
 as amended in M1. A broken Docker daemon is an environment
 problem (`2`).
+
+In every step, a command that cannot be executed (`126`/`127`) or is killed by a signal (status
+above `128`, such as `137` from the OOM killer) exits `2`: it never got to judge the code.
 
 Every step runs with `NO_COLOR=1 FORCE_COLOR=0 CI=1`. On failure `.verify.log` contains the
 step, exit code, command and the last `THEMIS_LOG_LINES` (default 200) lines of output with

@@ -189,6 +189,50 @@ describe("verify.sh failures", () => {
     expect(verify(p).code).toBe(2);
   });
 
+  it.each([
+    ["SIGKILL (OOM killer)", "KILL"],
+    ["SIGTERM", "TERM"],
+  ])("treats a tool killed by %s as an environment problem", async (_name, signal) => {
+    const p = await project({ steps: "typecheck" });
+    await p.write(
+      "node_modules/.bin/tsc",
+      `#!/bin/sh\nif [ "$1" = "--version" ]; then exit 0; fi\necho "tsc output"\nkill -${signal} $$\n`,
+      0o755,
+    );
+    const result = verify(p);
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("verify: FAIL at typecheck (exit 2)");
+    const log = await result.log();
+    expect(log).toMatch(/^step: typecheck\nexit: 2\ncommand: .*tsc --noEmit\n/);
+    expect(log).toMatch(/message: command was killed by a signal \(status 1[34][0-9]\)/);
+    expect(log).toContain("tsc output");
+  });
+
+  it("exits 2 at infra when the Compose plugin is missing, before checking the compose file", async () => {
+    const p = await project();
+    // Without the plugin every `docker compose` subcommand fails, `config` included.
+    const result = verify(p, [], {
+      STUB_DOCKER_VERSION: "1",
+      STUB_DOCKER_CONFIG: "1",
+      STUB_DOCKER_UP: "1",
+    });
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("verify: FAIL at infra (exit 2)");
+    expect((await result.calls()).filter((call) => call.startsWith("docker"))).toEqual([
+      "docker info",
+    ]);
+    const log = await result.log();
+    expect(log).toMatch(/^step: infra\nexit: 2\ncommand: docker compose version\n/);
+    expect(log).toContain("message: the Docker Compose plugin is missing or does not start");
+    expect(log).toContain("docker cannot start");
+  });
+
+  it("probes the Compose plugin before using it", async () => {
+    const p = await project({ steps: "infra" });
+    expect(verify(p).code).toBe(0);
+    expect(await readFile(join(p.root, "stub.log.probes"), "utf8")).toBe("docker\n");
+  });
+
   it("exits 2 for a tool that is installed but does not start, before running it", async () => {
     const p = await project({ steps: "typecheck lint" });
     const result = verify(p, [], { STUB_BIOME_VERSION: "1" });
