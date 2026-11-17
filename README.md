@@ -33,7 +33,7 @@ configuration over time.
 
 > Status: early development. Milestones M0 to M6 are done (format, init, plan, tests, run with
 > worktrees, review and parallelism, status and retrospective). The format is at version
-> `0.1`. Not published to npm yet.
+> `0.1`. Published to npm as `themis-spec`.
 
 Inspired by Boris Cherny's advice to give Claude a way to verify its work
 ([why](https://github.com/AlbertoBarrago/themis/wiki/Inspiration)).
@@ -76,8 +76,13 @@ exits `0`, and nobody needs to ask you again.
 
 ## Installation
 
-Themis is not on npm yet (the package will be `themis-spec`, the command `themis`). From a
-clone:
+The package is `themis-spec`, the command `themis`:
+
+```sh
+npm install -g themis-spec
+```
+
+From a clone:
 
 ```sh
 npm install
