@@ -9,14 +9,14 @@ const ALL_STEPS = "typecheck lint unit infra migrate acceptance";
 
 /**
  * Stub that logs its invocation, prints coloured output and exits with `$<var>` (default 0).
- * `--version` (the verifier's start-up probe) is answered first and logged apart, in
- * `$STUB_LOG.probes`; it exits with
- * `$STUB_<NAME>_VERSION`, so a test can simulate a tool that does not start.
+ * `--version` and `compose version` (the verifier's start-up probes) are answered first and
+ * logged apart, by name, in `$STUB_LOG.probes`; they exit with
+ * `$STUB_<NAME>_VERSION`, so a test can simulate a tool (or the Compose plugin) that does not start.
  */
 function stub(name: string, exitExpression: string): string {
   return [
     "#!/bin/sh",
-    `if [ "$1" = "--version" ]; then echo "${name}" >> "$STUB_LOG.probes"; echo "${name} cannot start" >&2; exit "\${STUB_${name.toUpperCase()}_VERSION:-0}"; fi`,
+    `case "$*" in --version|"compose version") echo "${name}" >> "$STUB_LOG.probes"; echo "${name} cannot start" >&2; exit "\${STUB_${name.toUpperCase()}_VERSION:-0}" ;; esac`,
     `echo "${name} $*" >> "$STUB_LOG"`,
     `printf '\\033[31m${name} output\\033[0m\\n'`,
     `for i in 1 2 3 4 5; do echo "${name} line $i"; done`,
