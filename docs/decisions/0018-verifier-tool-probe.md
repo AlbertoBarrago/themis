@@ -18,6 +18,16 @@ exit `0`, the step fails with exit `2` and `.verify.log` names the probe, a mess
 the install (another platform, or a broken install) and the probe's output. Each tool is
 probed once per verification, even when two steps use it (`vitest` for unit and acceptance).
 
+Amended 2026-11-17: the same reasoning covers two more cases where the tool never judged the code.
+
+- Infra probes the Compose plugin with `docker compose version` after `docker info` and before
+  `docker compose config -q`. Without the plugin every `docker compose` call fails, and
+  `config` would report it as an invalid compose file (`1`); the probe fails with `2` instead.
+- A step whose command is killed by a signal (status above `128`, such as `137` from the OOM
+  killer or `143` from `SIGTERM`) exits `2`, like a command that cannot be executed (`126`/`127`).
+  A tool that crashes on its own without a signal still exits `1`: the verifier cannot tell it
+  from a failing check.
+
 ## Consequences
 
 - An environment problem in the tools blocks the task at the first iteration instead of

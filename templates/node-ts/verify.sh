@@ -51,7 +51,8 @@ fail() {
 }
 
 # run <step> <exit code on failure|passthrough> <command...>
-# A command that cannot be executed (126/127) is always an environment problem.
+# A command that cannot be executed (126/127) or is killed by a signal (above 128, e.g. 137 from
+# the OOM killer) never got to judge the code, so it is always an environment problem.
 # `passthrough` keeps the command's own 1 or 2 (used by the guard).
 run() {
   local step="$1" code="$2"
@@ -62,6 +63,9 @@ run() {
   if [ "$status" -eq 0 ]; then return 0; fi
   if [ "$status" -eq 126 ] || [ "$status" -eq 127 ]; then
     fail "$step" 2 "$*" "command could not be executed"
+  fi
+  if [ "$status" -gt 128 ]; then
+    fail "$step" 2 "$*" "command was killed by a signal (status $status)"
   fi
   if [ "$code" = "passthrough" ]; then
     if [ "$status" -eq 1 ]; then code=1; else code=2; fi
@@ -138,6 +142,12 @@ if enabled infra; then
   # The compose file is part of the implementation, so its absence is a code problem.
   [ -n "$compose" ] || abort infra 1 "docker compose" "infra is enabled but there is no compose file"
   run infra 2 docker info
+  # Without the Compose plugin every `docker compose` call fails, and `config` would report it
+  # as an invalid compose file (exit 1). Probe the plugin first, as require_bin does for tools.
+  if ! docker compose version >"$OUTPUT" 2>&1; then
+    fail infra 2 "docker compose version" \
+      "the Docker Compose plugin is missing or does not start: install Docker Compose v2"
+  fi
   run infra 1 docker compose -f "$compose" config -q
   run infra 2 docker compose -f "$compose" up -d --wait
 fi
