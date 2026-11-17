@@ -21,7 +21,7 @@
   "type": "module",
   "license": "MIT",
   "bin": {
-    "themis": "./dist/cli/main.js"
+    "themis": "dist/cli/main.js"
   },
   "files": [
     "LICENSE",
